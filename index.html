@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Private CRM</title>
+
+<style>
+body{
+  font-family: Arial;
+  background:#f5f6fa;
+  padding:20px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+th,td{
+  padding:10px;
+  border:1px solid #ddd;
+  font-size:14px;
+}
+input{
+  padding:6px;
+  margin:4px;
+}
+button{
+  padding:8px 14px;
+  background:#111;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+.alert50{background:#fff4cc;}
+.alert30{background:#ffd6d6;}
+</style>
+</head>
+
+<body>
+
+<h2>Company Private Sales CRM</h2>
+
+<div>
+<input id="entity" placeholder="Entity">
+<input id="customer" placeholder="Customer Name">
+<input id="validity" type="date">
+<input id="location" placeholder="Location">
+<input id="value" placeholder="Value">
+<button onclick="addRow()">Add</button>
+</div>
+
+<br>
+
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Customer</th>
+<th>Expiry</th>
+<th>Location</th>
+<th>Value</th>
+</tr>
+</thead>
+
+<tbody id="tableData"></tbody>
+</table>
+
+<script>
+let data = JSON.parse(localStorage.getItem("crmData")||"[]")
+
+function save(){
+localStorage.setItem("crmData",JSON.stringify(data))
+render()
+}
+
+function addRow(){
+const entity=document.getElementById("entity").value
+const customer=document.getElementById("customer").value
+const validity=document.getElementById("validity").value
+const location=document.getElementById("location").value
+const value=document.getElementById("value").value
+
+data.push({entity,customer,validity,location,value})
+save()
+}
+
+function render(){
+const table=document.getElementById("tableData")
+table.innerHTML=""
+
+data.forEach(d=>{
+let cls=""
+if(d.validity){
+const today=new Date()
+const exp=new Date(d.validity)
+const diff=Math.ceil((exp-today)/(1000*60*60*24))
+
+if(diff<=30 && diff>=0) cls="alert30"
+else if(diff<=50 && diff>=0) cls="alert50"
+}
+
+table.innerHTML+=`
+<tr class="${cls}">
+<td>${d.entity||""}</td>
+<td>${d.customer||""}</td>
+<td>${d.validity||""}</td>
+<td>${d.location||""}</td>
+<td>${d.value||""}</td>
+</tr>`
+})
+}
+
+render()
+</script>
+
+</body>
+</html>
