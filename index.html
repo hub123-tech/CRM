@@ -1,136 +1,323 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Private CRM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise Sales Tracker</title>
 
 <style>
+:root{
+ --primary:#2563eb;
+ --bg:#f8fafc;
+ --surface:#ffffff;
+ --text:#1e293b;
+ --border:#e2e8f0;
+ --danger:#ef4444;
+ --warning:#f59e0b;
+}
+
 body{
-  font-family: Arial;
-  background:#f5f6fa;
-  padding:20px;
+ font-family:Inter,Arial;
+ background:var(--bg);
+ margin:0;
+ padding:20px;
 }
+
+header{
+ display:flex;
+ justify-content:space-between;
+ background:white;
+ padding:15px;
+ border-radius:10px;
+ border:1px solid var(--border);
+ margin-bottom:15px;
+}
+
+.btn{
+ background:var(--primary);
+ color:white;
+ border:none;
+ padding:10px 16px;
+ border-radius:8px;
+ cursor:pointer;
+}
+
+.table-container{
+ background:white;
+ border-radius:12px;
+ border:1px solid var(--border);
+ overflow:auto;
+}
+
 table{
-  width:100%;
-  border-collapse:collapse;
-  background:white;
+ width:100%;
+ border-collapse:collapse;
+ white-space:nowrap;
 }
-th,td{
-  padding:10px;
-  border:1px solid #ddd;
-  font-size:14px;
+
+th{
+ background:#f1f5f9;
+ position:sticky;
+ top:0;
+ padding:10px;
 }
-input{
-  padding:6px;
-  margin:4px;
+
+td{
+ padding:10px;
+ border-bottom:1px solid var(--border);
 }
-button{
-  padding:8px 14px;
-  background:#111;
-  color:white;
-  border:none;
-  cursor:pointer;
+
+.status{
+ padding:3px 6px;
+ border-radius:8px;
+ font-size:12px;
+ font-weight:bold;
 }
-.alert50{background:#fff4cc;}
-.alert30{background:#ffd6d6;}
+
+.status-active{background:#dcfce7;color:#065f46}
+.status-pending{background:#fef3c7;color:#92400e}
+.status-inactive{background:#fee2e2;color:#991b1b}
+
+.modal-overlay{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,0.4);
+ display:none;
+ justify-content:center;
+ align-items:center;
+}
+
+.modal-overlay.open{display:flex}
+
+.modal{
+ background:white;
+ padding:20px;
+ border-radius:12px;
+ width:90%;
+ max-width:900px;
+ max-height:90vh;
+ overflow:auto;
+}
+
+.form-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+ gap:12px;
+}
+
+label::after{
+ content:" *";
+ color:var(--danger);
+}
+
+input,select{
+ padding:8px;
+ border:1px solid var(--border);
+ border-radius:6px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>Company Private Sales CRM</h2>
+<header>
+<h2>🚀 Enterprise Sales & Service Tracker</h2>
+<button class="btn" onclick="openModal()">+ Add Entry</button>
+</header>
 
-<div>
-<input id="Entity" placeholder="Entity">
-<input id="Client" placeholder="Client Name">
-<input id="Customer" placeholder="Customer Name">
-<input id="location" placeholder="Location">
-<input id="PO Number" placeholder="PO Number">
-<input id="PO Isuue Date" placeholder="PO Issue Date">
-<input id="PO validity Date" type="PO Validity date">
-<input id="Expired PO" type="Expired PO">
-<input id="Renewd PO" type="Renewd PO">
-<input id="Service" type="Service Status">
-<input id="Service" placeholder="Serivice Start Date">
-<input id="Service" placeholder="Serivice END Date">
-<input id="Price" placeholder="Value">
-<button onclick="addRow()">Add</button>
-</div>
-
-<br>
-
+<div class="table-container">
 <table>
 <thead>
 <tr>
 <th>Entity</th>
-<th>Client</th>
 <th>Customer</th>
+<th>Speed</th>
 <th>Location</th>
-<th>PO Number</th>
-<th>PO Isuue Date</th>
-<th>PO validity Date</th>
-<th>Expired PO</th>
-<th>Renewd PO</th>
-<th>Service Status</th>
-<th>Serivice Start Date</th>
-<th>Serivice END Date</th>
+<th>Connectivity</th>
+<th>Delivery</th>
+<th>Months</th>
+<th>Devices</th>
 <th>Price</th>
-<th>Customer</th>
-<th>Expiry</th>
-<th>Location</th>
-<th>Value</th>
+<th>Excl GST</th>
+<th>Incl GST</th>
+<th>Payment</th>
+<th>Payment Date</th>
+<th>Start</th>
+<th>End</th>
+<th style="color:#2563eb">PO Expiry</th>
+<th style="color:#ef4444">Service Stop</th>
+<th>Actions</th>
 </tr>
 </thead>
-
-<tbody id="tableData"></tbody>
+<tbody id="tableBody"></tbody>
 </table>
+</div>
+
+<div class="modal-overlay" id="modal">
+<div class="modal">
+<h3 id="modalTitle">New Entry</h3>
+
+<form id="salesForm" onsubmit="handleFormSubmit(event)">
+
+<input type="hidden" id="entryId" name="id">
+
+<div class="form-grid">
+
+<label>Entity<input id="entity" name="entity" required></label>
+<label>Customer Name<input id="customerName" name="customerName" required></label>
+<label>Speed<input type="number" id="speed" name="speed" required></label>
+<label>Location<input id="location" name="location" required></label>
+
+<label>Connectivity<select id="connectivity" name="connectivity">
+<option>Fiber</option><option>Wireless</option><option>LTE</option>
+</select></label>
+
+<label>Delivery Status<select id="deliveryStatus" name="deliveryStatus">
+<option>Active</option><option>Pending</option><option>Inactive</option>
+</select></label>
+
+<label>Months<input type="number" id="months" name="months" required></label>
+<label>Devices<input type="number" id="devices" name="devices" required></label>
+
+<label>Price<input type="number" id="price" name="price" required></label>
+<label>Excl GST<input type="number" id="exclGst" name="exclGst" required></label>
+<label>Incl GST<input type="number" id="inclGst" name="inclGst" required></label>
+
+<label>Payment Status<select id="paymentStatus" name="paymentStatus">
+<option>Paid</option><option>Unpaid</option><option>Overdue</option>
+</select></label>
+
+<label>Payment Date<input type="date" id="paymentDate" name="paymentDate" required></label>
+<label>Start Date<input type="date" id="startDate" name="startDate" required></label>
+<label>End Date<input type="date" id="endDate" name="endDate" required></label>
+
+<label>PO Expiry<input type="date" id="poExpiryDate" name="poExpiryDate" required></label>
+<label>Service Stop<input type="date" id="serviceStopDate" name="serviceStopDate" required></label>
+
+</div>
+
+<br>
+<button class="btn">Save Record</button>
+<button type="button" onclick="closeModal()">Cancel</button>
+
+</form>
+</div>
+</div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("crmData")||"[]")
 
-function save(){
-localStorage.setItem("crmData",JSON.stringify(data))
-render()
+let salesData=JSON.parse(localStorage.getItem("salesData")||"[]");
+let editingId=null;
+
+const modal=document.getElementById("modal");
+const tableBody=document.getElementById("tableBody");
+
+function openModal(){
+ editingId=null;
+ document.getElementById("salesForm").reset();
+ modal.classList.add("open");
 }
 
-function addRow(){
-const entity=document.getElementById("entity").value
-const customer=document.getElementById("customer").value
-const validity=document.getElementById("validity").value
-const location=document.getElementById("location").value
-const value=document.getElementById("value").value
-
-data.push({entity,customer,validity,location,value})
-save()
+function closeModal(){
+ modal.classList.remove("open");
 }
 
-function render(){
-const table=document.getElementById("tableData")
-table.innerHTML=""
-
-data.forEach(d=>{
-let cls=""
-if(d.validity){
-const today=new Date()
-const exp=new Date(d.validity)
-const diff=Math.ceil((exp-today)/(1000*60*60*24))
-
-if(diff<=30 && diff>=0) cls="alert30"
-else if(diff<=50 && diff>=0) cls="alert50"
+function saveData(){
+ localStorage.setItem("salesData",JSON.stringify(salesData));
 }
 
-table.innerHTML+=`
-<tr class="${cls}">
-<td>${d.entity||""}</td>
-<td>${d.customer||""}</td>
-<td>${d.validity||""}</td>
-<td>${d.location||""}</td>
-<td>${d.value||""}</td>
-</tr>`
-})
+function handleFormSubmit(e){
+ e.preventDefault();
+
+ const required=[
+ "entity","customerName","speed","location","connectivity",
+ "deliveryStatus","months","devices","price","exclGst","inclGst",
+ "paymentStatus","paymentDate","startDate","endDate","poExpiryDate","serviceStopDate"
+ ];
+
+ const formData=new FormData(e.target);
+ const entry=Object.fromEntries(formData.entries());
+
+ for(let f of required){
+   if(!entry[f]){
+     alert("⚠️ All columns mandatory. Missing: "+f);
+     return;
+   }
+ }
+
+ if(editingId){
+   salesData=salesData.map(i=>i.id===editingId?{...entry,id:editingId}:i);
+ }else{
+   entry.id=Date.now();
+   salesData.push(entry);
+ }
+
+ saveData();
+ renderTable();
+ closeModal();
 }
 
-render()
+function renderTable(){
+ tableBody.innerHTML="";
+
+ salesData.forEach(item=>{
+
+ let rowColor="";
+ const today=new Date();
+ const exp=new Date(item.poExpiryDate);
+ const diff=Math.ceil((exp-today)/(1000*60*60*24));
+
+ if(diff<=30 && diff>=0) rowColor="background:#fee2e2";
+ else if(diff<=50 && diff>=0) rowColor="background:#fef3c7";
+
+ const tr=document.createElement("tr");
+ tr.setAttribute("style",rowColor);
+
+ tr.innerHTML=`
+ <td>${item.entity}</td>
+ <td>${item.customerName}</td>
+ <td>${item.speed}</td>
+ <td>${item.location}</td>
+ <td>${item.connectivity}</td>
+ <td><span class="status status-${item.deliveryStatus.toLowerCase()}">${item.deliveryStatus}</span></td>
+ <td>${item.months}</td>
+ <td>${item.devices}</td>
+ <td>₹${item.price}</td>
+ <td>₹${item.exclGst}</td>
+ <td>₹${item.inclGst}</td>
+ <td>${item.paymentStatus}</td>
+ <td>${item.paymentDate}</td>
+ <td>${item.startDate}</td>
+ <td>${item.endDate}</td>
+ <td>${item.poExpiryDate}</td>
+ <td>${item.serviceStopDate}</td>
+ <td>
+  <button onclick="editEntry(${item.id})">✏️</button>
+  <button onclick="deleteEntry(${item.id})">🗑️</button>
+ </td>
+ `;
+ tableBody.appendChild(tr);
+ });
+}
+
+function editEntry(id){
+ const item=salesData.find(i=>i.id===id);
+ editingId=id;
+ for(const k in item){
+  if(document.getElementById(k)) document.getElementById(k).value=item[k];
+ }
+ modal.classList.add("open");
+}
+
+function deleteEntry(id){
+ if(confirm("Delete record?")){
+  salesData=salesData.filter(i=>i.id!==id);
+  saveData();
+  renderTable();
+ }
+}
+
+renderTable();
 </script>
 
 </body>
