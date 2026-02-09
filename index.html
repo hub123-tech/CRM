@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enterprise Sales Tracker</title>
+<title>Company Cloud CRM</title>
 
 <style>
 body{
@@ -105,7 +105,7 @@ input,select{
 <div class="form-grid">
 
 <input name="entity" placeholder="Entity">
-<input name="customerName" placeholder="Customer">
+<input name="customerName" placeholder="Customer Name">
 <input name="speed" placeholder="Speed">
 <input name="location" placeholder="Location">
 
@@ -156,6 +156,7 @@ input,select{
 
 <script>
 
+/* 🔐 SUPABASE SETUP */
 const supabaseUrl="https://jhvujuqzkjbprmshizcx.supabase.co";
 const supabaseKey="sb_publishable_F_SEkmGLAe00CNrXVbce6g_H1LK5006";
 
@@ -172,6 +173,7 @@ const modal=document.getElementById("modal");
 function openModal(){ modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 
+/* LOAD DATA FROM CLOUD */
 async function loadData(){
 
  const {data,error}=await supabase
@@ -179,12 +181,16 @@ async function loadData(){
  .select("*")
  .order("id",{ascending:false});
 
- if(error){console.log(error);return;}
+ if(error){
+   alert("Load error: "+error.message);
+   return;
+ }
 
  salesData=data;
  renderTable();
 }
 
+/* RENDER TABLE */
 function renderTable(){
 
  tableBody.innerHTML="";
@@ -194,26 +200,27 @@ function renderTable(){
  tableBody.innerHTML+=`
  <tr>
  <td>${item.entity||""}</td>
- <td>${item.customername||""}</td>
+ <td>${item.customerName||""}</td>
  <td>${item.speed||""}</td>
  <td>${item.location||""}</td>
  <td>${item.connectivity||""}</td>
- <td>${item.deliverystatus||""}</td>
+ <td>${item.deliveryStatus||""}</td>
  <td>${item.months||""}</td>
  <td>${item.devices||""}</td>
  <td>${item.price||""}</td>
- <td>${item.exclgst||""}</td>
- <td>${item.inclgst||""}</td>
- <td>${item.paymentstatus||""}</td>
- <td>${item.startdate||""}</td>
- <td>${item.enddate||""}</td>
- <td>${item.poexpirydate||""}</td>
- <td>${item.servicestopdate||""}</td>
+ <td>${item.exclGst||""}</td>
+ <td>${item.inclGst||""}</td>
+ <td>${item.paymentStatus||""}</td>
+ <td>${item.startDate||""}</td>
+ <td>${item.endDate||""}</td>
+ <td>${item.poExpiryDate||""}</td>
+ <td>${item.serviceStopDate||""}</td>
  <td><button onclick="deleteEntry(${item.id})">Delete</button></td>
  </tr>`;
  });
 }
 
+/* SAVE ENTRY TO CLOUD */
 document.getElementById("salesForm").addEventListener("submit",async(e)=>{
 
  e.preventDefault();
@@ -225,23 +232,33 @@ document.getElementById("salesForm").addEventListener("submit",async(e)=>{
  .from("sales_entries")
  .insert([entry]);
 
- if(error){console.log(error);return;}
+ if(error){
+   alert("Insert error: "+error.message);
+   return;
+ }
 
  e.target.reset();
  closeModal();
  loadData();
 });
 
+/* DELETE ENTRY */
 async function deleteEntry(id){
 
- await supabase
+ const {error}=await supabase
  .from("sales_entries")
  .delete()
  .eq("id",id);
 
+ if(error){
+   alert("Delete error: "+error.message);
+   return;
+ }
+
  loadData();
 }
 
+/* INITIAL LOAD */
 loadData();
 
 </script>
