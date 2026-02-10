@@ -13,107 +13,39 @@
  --text-main:#1e293b;
  --text-light:#64748b;
  --border:#e2e8f0;
- --danger:#ef4444;
 }
 
-body{
- font-family:Arial;
- background:var(--bg);
- margin:0;
- padding:20px;
-}
+body{ font-family:Arial; background:var(--bg); margin:0; padding:20px; }
 
 header{
- display:flex;
- justify-content:space-between;
- background:white;
- padding:16px 24px;
- border-radius:12px;
- margin-bottom:20px;
+ display:flex; justify-content:space-between; align-items:center;
+ background:white; padding:16px 24px; border-radius:12px; margin-bottom:20px;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .btn{
- background:var(--primary);
- color:white;
- border:none;
- padding:10px 20px;
- border-radius:8px;
- cursor:pointer;
+ background:var(--primary); color:white; border:none;
+ padding:10px 20px; border-radius:8px; cursor:pointer; font-weight: bold;
 }
 
-.table-container{
- background:white;
- border-radius:12px;
- overflow:auto;
-}
-
-table{
- width:100%;
- border-collapse:collapse;
-}
-
-th{
- background:#f1f5f9;
- padding:12px;
- text-align:left;
-}
-
-td{
- padding:12px;
- border-bottom:1px solid var(--border);
- color:var(--text-light);
-}
+.table-container{ background:white; border-radius:12px; overflow:auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+table{ width:100%; border-collapse:collapse; }
+th{ background:#f1f5f9; padding:12px; text-align:left; font-size: 14px; }
+td{ padding:12px; border-bottom:1px solid var(--border); color:var(--text-light); font-size: 14px; }
 
 .modal-overlay{
- position:fixed;
- top:0;
- left:0;
- width:100%;
- height:100%;
- background:rgba(0,0,0,0.5);
- display:flex;
- justify-content:center;
- align-items:center;
- opacity:0;
- pointer-events:none;
- transition: opacity 0.2s;
+ position:fixed; top:0; left:0; width:100%; height:100%;
+ background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center;
+ z-index: 1000;
 }
 
-.modal-overlay.open{
- opacity:1;
- pointer-events:auto;
-}
+.modal-overlay.open{ display:flex; }
+.modal{ background:white; width:90%; max-width:800px; border-radius:16px; padding:24px; }
 
-.modal{
- background:white;
- width:90%;
- max-width:800px;
- border-radius:16px;
- padding:24px;
-}
+.form-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+input, select{ padding:10px; border:1px solid var(--border); border-radius:6px; width:100%; box-sizing:border-box; }
 
-.form-grid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
- gap:16px;
-}
-
-input,select{
- padding:10px;
- border:1px solid var(--border);
- border-radius:6px;
- width: 100%; /* Fix for alignment */
- box-sizing: border-box; /* Fix for padding */
-}
-
-.actions-cell button{
- margin-right:6px;
- cursor: pointer;
- border: 1px solid var(--border);
- background: white;
- padding: 5px 10px;
- border-radius: 4px;
-}
+.actions-cell button{ cursor:pointer; margin-right:5px; border:none; background:none; font-size: 18px; }
 </style>
 </head>
 
@@ -143,35 +75,32 @@ input,select{
 <th>Actions</th>
 </tr>
 </thead>
-<tbody id="tableBody"></tbody>
+<tbody id="tableBody">
+    <tr><td colspan="13" style="text-align:center">Loading data...</td></tr>
+</tbody>
 </table>
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
 <div class="modal">
-<h3>Entry Details</h3>
-<br>
-<form id="salesForm" onsubmit="handleFormSubmit(event)">
-<input type="hidden" id="entryId">
-
+<h3 id="modalTitle">New Entry</h3>
+<form id="salesForm">
 <div class="form-grid">
 <input id="entity" name="entity" placeholder="Entity" required>
 <input id="customerName" name="customerName" placeholder="Customer Name" required>
-<input id="speed" name="speed" placeholder="Speed (e.g. 100Mbps)">
+<input id="speed" name="speed" placeholder="Speed">
 <input id="location" name="location" placeholder="Location">
 
 <select id="connectivity" name="connectivity">
-<option value="" disabled selected>Select Connectivity</option>
-<option>Fiber</option>
-<option>Wireless</option>
-<option>LTE/5G</option>
+<option value="Fiber">Fiber</option>
+<option value="Wireless">Wireless</option>
+<option value="LTE/5G">LTE/5G</option>
 </select>
 
 <select id="deliveryStatus" name="deliveryStatus">
-<option value="" disabled selected>Select Status</option>
-<option>Pending</option>
-<option>Active</option>
-<option>Inactive</option>
+<option value="Pending">Pending</option>
+<option value="Active">Active</option>
+<option value="Inactive">Inactive</option>
 </select>
 
 <input id="months" name="months" type="number" placeholder="Months">
@@ -179,230 +108,147 @@ input,select{
 <input id="price" name="price" type="number" placeholder="Price">
 
 <select id="paymentStatus" name="paymentStatus">
-<option value="" disabled selected>Payment Status</option>
-<option>Unpaid</option>
-<option>Paid</option>
-<option>Overdue</option>
+<option value="Unpaid">Unpaid</option>
+<option value="Paid">Paid</option>
+<option value="Overdue">Overdue</option>
 </select>
 
-<div>
-<label style="font-size:12px; color:#666">PO Expiry</label>
-<input type="date" id="poExpiryDate" name="poExpiryDate">
-</div>
-<div>
-<label style="font-size:12px; color:#666">Service Stop</label>
-<input type="date" id="serviceStopDate" name="serviceStopDate">
-</div>
+<div><label>PO Expiry</label><input type="date" id="poExpiryDate" name="poExpiryDate"></div>
+<div><label>Service Stop</label><input type="date" id="serviceStopDate" name="serviceStopDate"></div>
 </div>
 
-<br>
-<div style="text-align: right; margin-top: 20px;">
-    <button class="btn" type="button" onclick="closeModal()" style="background: #94a3b8; margin-right: 10px;">Cancel</button>
-    <button class="btn" type="submit">Save Record</button>
+<div style="margin-top:20px; text-align:right;">
+<button class="btn" type="button" onclick="closeModal()" style="background:#64748b">Cancel</button>
+<button class="btn" type="submit">Save Record</button>
 </div>
-
 </form>
-
 </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
 /* ======================
-   SUPABASE CONNECTION
+   SUPABASE CONFIG
 ====================== */
-
-// ⚠️ IMPORTANT: Use your 'anon' / 'public' key here. 
-// It usually starts with "eyJh..." (JWT format).
 const supabaseUrl = "https://jhvujuqzkjbprmshizcx.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnVqdXF6a2picHJtc2hpemN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDU0NjcsImV4cCI6MjA4NjIyMTQ2N30.sa2KCYFNKipT_vz_4uvWX4h5lD54Fw4DW2PFa8Tck6A"; 
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnVqdXF6a2picHJtc2hpemN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDU0NjcsImV4cCI6MjA4NjIyMTQ2N30.sa2KCYFNKipT_vz_4uvWX4h5lD54Fw4DW2PFa8Tck6A";
 
-// Initialize Client Safely
-let supabase = null;
-if (supabaseUrl && supabaseKey && supabaseKey.length > 20 && !supabaseKey.includes("PASTE")) {
-    try {
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-    } catch (err) {
-        console.error("Supabase Init Error:", err);
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+let salesData = [];
+let editingId = null;
+
+const modal = document.getElementById('modalOverlay');
+const form = document.getElementById('salesForm');
+const tableBody = document.getElementById('tableBody');
+
+/* ======================
+   FUNCTIONS
+====================== */
+
+// 1. OPEN MODAL (The fix: Ensure this is defined globally)
+window.openModal = function() {
+    editingId = null;
+    document.getElementById('modalTitle').innerText = "New Entry";
+    form.reset();
+    modal.classList.add('open');
+}
+
+window.closeModal = function() {
+    modal.classList.remove('open');
+}
+
+// 2. LOAD DATA
+async function loadData() {
+    const { data, error } = await supabase
+        .from("sales_entries")
+        .select("*")
+        .order("id", { ascending: false });
+
+    if (error) {
+        console.error("Supabase Error:", error);
+        tableBody.innerHTML = `<tr><td colspan="13" style="color:red">Error: ${error.message}. Make sure table 'sales_entries' exists.</td></tr>`;
+        return;
     }
-} else {
-    console.warn("⚠️ SUPABASE NOT CONNECTED: Check your URL and Key in the code.");
+
+    salesData = data || [];
+    renderTable();
 }
 
-/* ======================
-   STATE
-====================== */
+// 3. RENDER TABLE
+function renderTable() {
+    tableBody.innerHTML = "";
+    if (salesData.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='13' style='text-align:center'>No records found</td></tr>";
+        return;
+    }
 
-let salesData=[];
-let editingId=null;
-
-const modal=document.getElementById('modalOverlay');
-const form=document.getElementById('salesForm');
-const tableBody=document.getElementById('tableBody');
-
-/* ======================
-   MODAL FUNCTIONS
-====================== */
-
-function openModal(){
- editingId=null;
- form.reset();
- modal.classList.add('open');
+    salesData.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.entity || ""}</td>
+            <td>${item.customerName || ""}</td>
+            <td>${item.speed || ""}</td>
+            <td>${item.location || ""}</td>
+            <td>${item.connectivity || ""}</td>
+            <td><b>${item.deliveryStatus || ""}</b></td>
+            <td>${item.months || ""}</td>
+            <td>${item.devices || ""}</td>
+            <td>${item.price || ""}</td>
+            <td>${item.paymentStatus || ""}</td>
+            <td>${item.poExpiryDate || ""}</td>
+            <td>${item.serviceStopDate || ""}</td>
+            <td class="actions-cell">
+                <button onclick="editEntry(${item.id})">✏️</button>
+                <button onclick="deleteEntry(${item.id})">🗑️</button>
+            </td>
+        `;
+        tableBody.appendChild(tr);
+    });
 }
 
-function closeModal(){
- modal.classList.remove('open');
-}
+// 4. SAVE
+form.onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const entry = Object.fromEntries(formData.entries());
 
-/* ======================
-   LOAD DATA
-====================== */
+    try {
+        if (editingId) {
+            await supabase.from("sales_entries").update(entry).eq("id", editingId);
+        } else {
+            await supabase.from("sales_entries").insert([entry]);
+        }
+        closeModal();
+        loadData();
+    } catch (err) {
+        alert("Error saving record!");
+    }
+};
 
-async function loadData(){
- if(!supabase) return; // Prevent crash if keys are missing
+// 5. EDIT/DELETE
+window.editEntry = (id) => {
+    const item = salesData.find(x => x.id === id);
+    if (!item) return;
+    editingId = id;
+    document.getElementById('modalTitle').innerText = "Edit Entry";
+    
+    Object.keys(item).forEach(key => {
+        const input = form.elements[key];
+        if (input) input.value = item[key];
+    });
+    modal.classList.add('open');
+};
 
- const {data,error}=await supabase
- .from("sales_entries")
- .select("*")
- .order("id",{ascending:false});
+window.deleteEntry = async (id) => {
+    if (!confirm("Delete this record?")) return;
+    await supabase.from("sales_entries").delete().eq("id", id);
+    loadData();
+};
 
- if(error){
-     console.error("Error loading data:", error);
-     return;
- }
-
- salesData=data||[];
- renderTable();
-}
-
-/* ======================
-   SAVE ENTRY
-====================== */
-
-async function handleFormSubmit(e){
- e.preventDefault();
- 
- if(!supabase) {
-     alert("Cannot save: Supabase connection is missing. Please check your API Key in the code.");
-     return;
- }
-
- const formData=new FormData(e.target);
- const entry=Object.fromEntries(formData.entries());
-
- // Clean up empty numbers to avoid DB errors
- if(entry.months === "") delete entry.months;
- if(entry.devices === "") delete entry.devices;
- if(entry.price === "") delete entry.price;
-
- try {
-     let error;
-     if(editingId){
-      const res = await supabase.from("sales_entries").update(entry).eq("id",editingId);
-      error = res.error;
-     }else{
-      const res = await supabase.from("sales_entries").insert([entry]);
-      error = res.error;
-     }
-
-     if(error) throw error;
-
-     closeModal();
-     loadData();
- } catch (err) {
-     alert("Error saving: " + err.message);
-     console.error(err);
- }
-}
-
-/* ======================
-   DELETE
-====================== */
-
-async function deleteEntry(id){
- if(!confirm("Delete this record?")) return;
- if(!supabase) return;
-
- const { error } = await supabase.from("sales_entries").delete().eq("id",id);
- 
- if(error) {
-     alert("Error deleting: " + error.message);
- } else {
-     loadData();
- }
-}
-
-/* ======================
-   EDIT
-====================== */
-
-function editEntry(id){
- const item=salesData.find(x=>x.id===id);
- if(!item) return;
-
- editingId=id;
-
- Object.keys(item).forEach(k=>{
-  const el=document.getElementById(k);
-  if(el) el.value=item[k];
- });
-
- modal.classList.add('open');
-}
-
-/* ======================
-   RENDER TABLE
-====================== */
-
-function renderTable(){
- tableBody.innerHTML="";
-
- if(salesData.length === 0) {
-     tableBody.innerHTML = "<tr><td colspan='13' style='text-align:center'>No records found</td></tr>";
-     return;
- }
-
- salesData.forEach(item=>{
- tableBody.innerHTML+=`
- <tr>
- <td>${item.entity||""}</td>
- <td>${item.customerName||""}</td>
- <td>${item.speed||""}</td>
- <td>${item.location||""}</td>
- <td>${item.connectivity||""}</td>
- <td>${getStatusBadge(item.deliveryStatus)}</td>
- <td>${item.months||""}</td>
- <td>${item.devices||""}</td>
- <td>${item.price||""}</td>
- <td>${item.paymentStatus||""}</td>
- <td>${item.poExpiryDate||""}</td>
- <td>${item.serviceStopDate||""}</td>
- <td class="actions-cell">
- <button onclick="editEntry(${item.id})">✏️</button>
- <button onclick="deleteEntry(${item.id})">🗑️</button>
- </td>
- </tr>`;
- });
-}
-
-// Helper to make status look nice
-function getStatusBadge(status) {
-    if(!status) return "";
-    let color = "#64748b";
-    if(status === 'Active') color = "#16a34a";
-    if(status === 'Pending') color = "#ca8a04";
-    if(status === 'Inactive') color = "#dc2626";
-    return `<span style="color:${color}; font-weight:bold">${status}</span>`;
-}
-
-/* ======================
-   INITIAL LOAD
-====================== */
-
+// Start
 loadData();
-
 </script>
 
 </body>
