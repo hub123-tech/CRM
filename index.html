@@ -5,28 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enterprise Sales Tracker</title>
     <style>
-        :root { --primary:#2563eb; --bg:#f8fafc; --border:#e2e8f0; --text-light:#64748b; }
+        :root { --primary:#2563eb; --bg:#f8fafc; --border:#e2e8f0; }
         body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); gap: 15px; }
+        
+        .controls { display: flex; gap: 10px; align-items: center; flex-grow: 1; justify-content: flex-end; }
+        #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 300px; font-size: 14px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        
+        /* Color Coding Badges */
+        .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; text-transform: uppercase; border: 1px solid transparent; }
+        .bg-green { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .bg-red { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .bg-yellow { background-color: #fef9c3; color: #854d0e; border-color: #fef08a; }
+        .bg-gray { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+
         .table-container { background: white; border-radius: 12px; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; min-width: 1800px; } /* Wider for many columns */
-        th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 12px; white-space: nowrap; }
-        td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text-light); font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 2200px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; color: #475569; white-space: nowrap; text-transform: uppercase; }
+        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: #1e293b; }
+        
+        .action-btns { display: flex; gap: 12px; align-items: center; }
+        .action-btns button { cursor: pointer; border: none; background: none; font-size: 18px; padding: 0; }
+
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.open { display: flex; }
-        .modal { background: white; width: 95%; max-width: 900px; border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-        input, select { padding: 8px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing: border-box; }
-        label { font-size: 11px; color: #475569; font-weight: bold; display: block; margin-bottom: 4px; }
-        .actions-cell button { cursor: pointer; border: none; background: none; font-size: 16px; }
+        .modal { background: white; width: 95%; max-width: 950px; border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing:border-box; font-size: 13px; }
+        label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; color: #334155; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2>🚀 Sales & Service Tracker</h2>
-    <button class="btn" onclick="openModal()">+ Add New Entry</button>
+    <h2 style="margin:0;">Transmedia Sales Tracker</h2>
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search Customer or Entity..." onkeyup="filterTable()">
+        <button class="btn" onclick="openModal()">+ Add New Entry</button>
+    </div>
 </header>
 
 <div class="table-container">
@@ -34,7 +51,7 @@
         <thead>
             <tr>
                 <th>Entity</th><th>Customer Name</th><th>Speed</th><th>Location</th><th>Connectivity</th>
-                <th>Status</th><th>Months</th><th>Devices</th><th>Price</th><th>Excl. GST</th>
+                <th>Service Status</th><th>Months</th><th>Devices</th><th>Price</th><th>Excl. GST</th>
                 <th>Incl. GST</th><th>Payment Status</th><th>Payment Date</th><th>Start Date</th>
                 <th>End Date</th><th>PO Expiry</th><th>Stop Date</th><th>PO Renewed?</th><th>Renewal Date</th><th>Actions</th>
             </tr>
@@ -54,46 +71,41 @@
                 <div><label>Customer Name</label><input name="customerName" required></div>
                 <div><label>Speed (MBPS)</label><input name="speed"></div>
                 <div><label>Service Location</label><input name="location"></div>
-                
                 <div><label>Connectivity Type</label>
                     <select name="connectivity">
                         <option value="Fiber">Fiber</option><option value="Wireless">Wireless</option><option value="LTE/5G">LTE/5G</option>
                     </select>
                 </div>
-
-                <div><label>Del. Status</label>
+                <div><label>Service Status</label>
                     <select name="deliveryStatus">
-                        <option value="Pending">Pending</option><option value="Active">Active</option><option value="Inactive">Inactive</option>
+                        <option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Pending">Pending</option>
                     </select>
                 </div>
-
-                <div><label>Months</label><input name="months" type="number"></div>
-                <div><label>Devices</label><input name="devices" type="number"></div>
+                <div><label>No. of Months</label><input name="months" type="number"></div>
+                <div><label>No. of Devices</label><input name="devices" type="number"></div>
                 <div><label>Price</label><input name="price" type="number"></div>
                 <div><label>Excl. GST</label><input name="exclGst" type="number"></div>
                 <div><label>Incl. GST</label><input name="inclGst" type="number"></div>
-
                 <div><label>Payment Status</label>
                     <select name="paymentStatus">
-                        <option value="Unpaid">Unpaid</option><option value="Paid">Paid</option><option value="Overdue">Overdue</option>
+                        <option value="Unpaid">Unpaid</option><option value="Paid">Paid</option>
                     </select>
                 </div>
-
                 <div><label>Payment Date</label><input type="date" name="paymentDate"></div>
                 <div><label>Start Date</label><input type="date" name="startDate"></div>
                 <div><label>End Date</label><input type="date" name="endDate"></div>
                 <div><label>PO Expiry Date</label><input type="date" name="poExpiryDate"></div>
                 <div><label>Service Stop Date</label><input type="date" name="serviceStopDate"></div>
-
                 <div><label>PO Renewed?</label>
                     <select name="poRenewed">
-                        <option value="No">No</option><option value="Yes">Yes</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Renewed">Renewed</option>
                     </select>
                 </div>
                 <div><label>PO Renewal Date</label><input type="date" name="poRenewalDate"></div>
             </div>
-            <div style="margin-top:20px; text-align:right;">
-                <button class="btn" type="button" onclick="closeModal()" style="background:#64748b">Cancel</button>
+            <div style="margin-top:25px; text-align:right;">
+                <button class="btn" type="button" onclick="closeModal()" style="background:#64748b; margin-right: 10px;">Cancel</button>
                 <button class="btn" type="submit">Save Record</button>
             </div>
         </form>
@@ -103,7 +115,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // 1. CONFIG - Using dbClient to avoid variable collision
     const supabaseUrl = "https://jhvujuqzkjbprmshizcx.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnVqdXF6a2picHJtc2hpemN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDU0NjcsImV4cCI6MjA4NjIyMTQ2N30.sa2KCYFNKipT_vz_4uvWX4h5lD54Fw4DW2PFa8Tck6A";
     const dbClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -111,65 +122,91 @@
     let salesData = [];
     let editingId = null;
 
-    // 2. MODAL LOGIC
+    async function loadData() {
+        const { data, error } = await dbClient.from("sales_entries").select("*").order("id", { ascending: false });
+        if (error) return;
+        salesData = data || [];
+        renderTable(salesData);
+    }
+
+    function getStatusBadge(val) {
+        if (!val) return `<span class="badge bg-gray">-</span>`;
+        const lower = val.toLowerCase();
+        let colorClass = "bg-gray";
+        if (lower === 'paid' || lower === 'active' || lower === 'renewed') colorClass = "bg-green";
+        else if (lower === 'unpaid' || lower === 'inactive') colorClass = "bg-red";
+        else if (lower === 'pending') colorClass = "bg-yellow";
+        return `<span class="badge ${colorClass}">${val}</span>`;
+    }
+
+    function renderTable(dataToRender) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = dataToRender.length ? "" : "<tr><td colspan='20' style='text-align:center'>No records found</td></tr>";
+        dataToRender.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.entity || ""}</td>
+                <td>${item.customerName || ""}</td>
+                <td>${item.speed || ""}</td>
+                <td>${item.location || ""}</td>
+                <td>${item.connectivity || ""}</td>
+                <td>${getStatusBadge(item.deliveryStatus)}</td>
+                <td>${item.months || ""}</td>
+                <td>${item.devices || ""}</td>
+                <td>${item.price || ""}</td>
+                <td>${item.exclGst || ""}</td>
+                <td>${item.inclGst || ""}</td>
+                <td>${getStatusBadge(item.paymentStatus)}</td>
+                <td>${item.paymentDate || ""}</td>
+                <td>${item.startDate || ""}</td>
+                <td>${item.endDate || ""}</td>
+                <td>${item.poExpiryDate || ""}</td>
+                <td>${item.serviceStopDate || ""}</td>
+                <td>${getStatusBadge(item.poRenewed)}</td>
+                <td>${item.poRenewalDate || ""}</td>
+                <td>
+                    <div class="action-btns">
+                        <button onclick="editEntry(${item.id})">✏️</button>
+                        <button onclick="deleteEntry(${item.id})">🗑️</button>
+                    </div>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = salesData.filter(item => 
+            (item.customerName && item.customerName.toLowerCase().includes(query)) ||
+            (item.entity && item.entity.toLowerCase().includes(query))
+        );
+        renderTable(filtered);
+    }
+
     function openModal() {
         editingId = null;
         document.getElementById('modalTitle').innerText = "New Entry";
         document.getElementById('salesForm').reset();
         document.getElementById('modalOverlay').classList.add('open');
     }
-
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-
-    // 3. DATA LOGIC
-    async function loadData() {
-        const { data, error } = await dbClient.from("sales_entries").select("*").order("id", { ascending: false });
-        if (error) {
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="20">Error: ${error.message}</td></tr>`;
-            return;
-        }
-        salesData = data || [];
-        renderTable();
-    }
-
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = salesData.length ? "" : "<tr><td colspan='20'>No records found</td></tr>";
-        salesData.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.entity || ""}</td><td>${item.customerName || ""}</td><td>${item.speed || ""}</td><td>${item.location || ""}</td>
-                <td>${item.connectivity || ""}</td><td>${item.deliveryStatus || ""}</td><td>${item.months || ""}</td><td>${item.devices || ""}</td>
-                <td>${item.price || ""}</td><td>${item.exclGst || ""}</td><td>${item.inclGst || ""}</td><td>${item.paymentStatus || ""}</td>
-                <td>${item.paymentDate || ""}</td><td>${item.startDate || ""}</td><td>${item.endDate || ""}</td><td>${item.poExpiryDate || ""}</td>
-                <td>${item.serviceStopDate || ""}</td><td>${item.poRenewed || "No"}</td><td>${item.poRenewalDate || ""}</td>
-                <td class="actions-cell">
-                    <button onclick="editEntry(${item.id})">✏️</button>
-                    <button onclick="deleteEntry(${item.id})">🗑️</button>
-                </td>`;
-            tbody.appendChild(tr);
-        });
-    }
 
     document.getElementById('salesForm').onsubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const entry = Object.fromEntries(formData.entries());
 
-        // Numeric fields conversion
-        ['months', 'devices', 'price', 'exclGst', 'inclGst'].forEach(k => entry[k] = entry[k] ? Number(entry[k]) : null);
-        // Date fields cleaning
-        ['paymentDate', 'startDate', 'endDate', 'poExpiryDate', 'serviceStopDate', 'poRenewalDate'].forEach(k => { if(!entry[k]) delete entry[k] });
+        Object.keys(entry).forEach(key => {
+            if (entry[key] === "") entry[key] = null;
+            else if (['months', 'devices', 'price', 'exclGst', 'inclGst'].includes(key)) entry[key] = Number(entry[key]);
+        });
 
-        try {
-            const { error } = editingId 
-                ? await dbClient.from("sales_entries").update(entry).eq("id", editingId)
-                : await dbClient.from("sales_entries").insert([entry]);
-            
-            if (error) throw error;
-            closeModal();
-            loadData();
-        } catch (err) { alert("Save Error: " + err.message); }
+        const { error } = editingId 
+            ? await dbClient.from("sales_entries").update(entry).eq("id", editingId)
+            : await dbClient.from("sales_entries").insert([entry]);
+        
+        if (!error) { closeModal(); loadData(); }
+        else alert("Save Error: " + error.message);
     };
 
     window.editEntry = (id) => {
@@ -178,14 +215,15 @@
         editingId = id;
         document.getElementById('modalTitle').innerText = "Edit Entry";
         const form = document.getElementById('salesForm');
-        Object.keys(item).forEach(key => { if(form.elements[key]) form.elements[key].value = item[key]; });
+        Object.keys(item).forEach(key => { if(form.elements[key]) form.elements[key].value = item[key] || ""; });
         document.getElementById('modalOverlay').classList.add('open');
     };
 
     window.deleteEntry = async (id) => {
-        if (!confirm("Delete record?")) return;
-        await dbClient.from("sales_entries").delete().eq("id", id);
-        loadData();
+        if (confirm("Delete permanently?")) {
+            await dbClient.from("sales_entries").delete().eq("id", id);
+            loadData();
+        }
     };
 
     loadData();
