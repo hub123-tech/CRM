@@ -13,7 +13,7 @@
         .auth-card { background: white; color: #1e293b; padding: 30px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
 
-        /* RESPONSIVE HEADER */
+        /* HEADER & SEARCH FIX */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -23,7 +23,7 @@
             border-radius: 12px; 
             margin-bottom: 20px; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-            gap: 15px;
+            gap: 15px; 
             flex-wrap: wrap; 
         }
         
@@ -31,32 +31,32 @@
         #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 300px; font-size: 14px; }
         .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
 
-        /* MOBILE FIXES */
+        /* MOBILE VIEW */
         @media (max-width: 600px) {
             header { flex-direction: column; align-items: stretch; padding: 15px; }
             .controls { flex-direction: column; align-items: stretch; width: 100%; }
             #searchInput { max-width: none; margin-bottom: 5px; }
             .btn { width: 100%; margin-left: 0 !important; text-align: center; }
-            h2 { text-align: center; font-size: 18px; margin-bottom: 10px; }
+            h2 { text-align: center; font-size: 22px; margin: 0; }
         }
 
-        /* TABLE STYLES */
+        /* TABLE */
         .table-container { background: white; border-radius: 12px; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; min-width: 1800px; }
         th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; color: #475569; text-transform: uppercase; }
         td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: #1e293b; }
         
-        .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; text-transform: uppercase; }
+        .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; }
         .bg-green { background: #dcfce7; color: #166534; }
         .bg-red { background: #fee2e2; color: #991b1b; }
         .bg-yellow { background: #fef9c3; color: #854d0e; }
 
-        /* MODAL RESPONSIVENESS */
+        /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.open { display: flex; }
         .modal { background: white; width: 95%; max-width: 900px; border-radius: 16px; padding: 20px; max-height: 90vh; overflow-y: auto; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing:border-box; }
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing: border-box; }
         label { font-size: 12px; font-weight: bold; color: #334155; display: block; margin-bottom: 4px; }
     </style>
 </head>
@@ -65,7 +65,7 @@
 <div id="authOverlay">
     <div class="auth-card">
         <h2>Transmedia CRM</h2>
-        <p>Login with Authorized Email</p>
+        <p>Enter authorized credentials</p>
         <input type="email" id="loginEmail" placeholder="Email Address">
         <input type="password" id="loginPass" placeholder="Password">
         <button class="btn" style="width:100%" onclick="handleLogin()">Sign In</button>
@@ -74,7 +74,7 @@
 </div>
 
 <header>
-    <h2 style="margin:0;">Transmedia Sales Tracker</h2>
+    <h2>Transmedia Sales Tracker</h2>
     <div class="controls">
         <input type="text" id="searchInput" placeholder="Search Customer..." onkeyup="filterTable()">
         <button class="btn" onclick="openModal()">+ Add New Entry</button>
@@ -100,7 +100,7 @@
 
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
-        <h3 id="modalTitle">Entry Details</h3>
+        <h3>Entry Details</h3>
         <form id="salesForm">
             <div class="form-grid">
                 <div><label>Entity</label><input name="entity" required></div>
@@ -108,7 +108,7 @@
                 <div><label>Speed</label><input name="speed"></div>
                 <div><label>Location</label><input name="location"></div>
                 <div><label>Connectivity</label><select name="connectivity"><option value="Fiber">Fiber</option><option value="Wireless">Wireless</option></select></div>
-                <div><label>Service Status</label><select name="deliveryStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Pending">Pending</option></select></div>
+                <div><label>Service Status</label><select name="deliveryStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                 <div><label>Price</label><input name="price" type="number"></div>
                 <div><label>Payment Status</label><select name="paymentStatus"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option></select></div>
                 <div><label>Payment Date</label><input type="date" name="paymentDate"></div>
@@ -136,11 +136,10 @@
     let salesData = [];
     let editingId = null;
 
-    // --- AUTH LOGIC ---
     async function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPass').value;
-        const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
+        const { error } = await dbClient.auth.signInWithPassword({ email, password });
         if (error) {
             document.getElementById('errorMsg').innerText = error.message;
             document.getElementById('errorMsg').style.display = 'block';
@@ -150,20 +149,15 @@
         }
     }
 
-    async function handleLogout() {
-        await dbClient.auth.signOut();
-        location.reload();
-    }
+    async function handleLogout() { await dbClient.auth.signOut(); location.reload(); }
 
-    // --- DATA LOGIC ---
     async function loadData() {
         const { data, error } = await dbClient.from("sales_entries").select("*").order("id", { ascending: false });
         if (!error) { salesData = data; renderTable(data); }
     }
 
     function renderTable(data) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = data.map(item => `
+        document.getElementById('tableBody').innerHTML = data.map(item => `
             <tr>
                 <td>${item.entity || ""}</td>
                 <td>${item.customerName || ""}</td>
@@ -194,44 +188,35 @@
 
     function filterTable() {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = salesData.filter(i => (i.customerName || "").toLowerCase().includes(q) || (i.entity || "").toLowerCase().includes(q));
-        renderTable(filtered);
+        renderTable(salesData.filter(i => (i.customerName || "").toLowerCase().includes(q)));
     }
 
-    // --- DATE ERROR FIX ---
+    /* DELETE FIX: Ensure you set policy to 'ALL' in Supabase */
+    window.deleteEntry = async (id) => {
+        if (!confirm("Delete this entry?")) return;
+        const { error } = await dbClient.from("sales_entries").delete().eq("id", id);
+        if (error) alert("Error: Check if Supabase Policy is set to 'ALL'. " + error.message);
+        else loadData();
+    };
+
     document.getElementById('salesForm').onsubmit = async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const entry = Object.fromEntries(formData.entries());
-
-        Object.keys(entry).forEach(key => {
-            if (entry[key] === "") entry[key] = null; // Prevents "invalid input syntax for type date"
-        });
-
-        const { error } = editingId 
-            ? await dbClient.from("sales_entries").update(entry).eq("id", editingId)
-            : await dbClient.from("sales_entries").insert([entry]);
-
-        if (error) alert("Error: " + error.message);
-        else { closeModal(); loadData(); }
+        const entry = Object.fromEntries(new FormData(e.target).entries());
+        Object.keys(entry).forEach(k => { if(entry[k] === "") entry[k] = null; });
+        const { error } = editingId ? await dbClient.from("sales_entries").update(entry).eq("id", editingId) : await dbClient.from("sales_entries").insert([entry]);
+        if (error) alert(error.message); else { closeModal(); loadData(); }
     };
 
     function openModal() { editingId = null; document.getElementById('salesForm').reset(); document.getElementById('modalOverlay').classList.add('open'); }
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-
     window.editEntry = (id) => {
         editingId = id;
         const item = salesData.find(x => x.id === id);
         const form = document.getElementById('salesForm');
-        Object.keys(item).forEach(key => { if(form.elements[key]) form.elements[key].value = item[key] || ""; });
+        Object.keys(item).forEach(k => { if(form.elements[k]) form.elements[k].value = item[k] || ""; });
         document.getElementById('modalOverlay').classList.add('open');
     };
 
-    window.deleteEntry = async (id) => {
-        if(confirm("Delete this?")) { await dbClient.from("sales_entries").delete().eq("id", id); loadData(); }
-    };
-
-    // Auto-check if logged in
     (async () => {
         const { data: { user } } = await dbClient.auth.getUser();
         if (user) { document.getElementById('authOverlay').style.display = 'none'; loadData(); }
