@@ -134,7 +134,7 @@ input, select{ padding:10px; border:1px solid var(--border); border-radius:6px; 
 const supabaseUrl = "https://jhvujuqzkjbprmshizcx.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnVqdXF6a2picHJtc2hpemN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDU0NjcsImV4cCI6MjA4NjIyMTQ2N30.sa2KCYFNKipT_vz_4uvWX4h5lD54Fw4DW2PFa8Tck6A";
 
-// Fixed variable name to avoid "already declared" error
+// FIX: Renamed variable from 'supabase' to 'supabaseClient' to avoid conflict
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let salesData = [];
@@ -171,7 +171,7 @@ async function loadData() {
         renderTable();
     } catch (err) {
         console.error("Load Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="13" style="color:red; text-align:center;">Table check: Ensure 'sales_entries' exists in Supabase.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="13" style="color:red; text-align:center;">Database connection failed. Please check your Supabase table settings.</td></tr>`;
     }
 }
 
@@ -225,7 +225,7 @@ form.onsubmit = async (e) => {
         closeModal();
         loadData();
     } catch (err) {
-        alert("Error saving record. Check database permissions.");
+        alert("Error saving record. Ensure Row Level Security (RLS) is disabled or set to public.");
     }
 };
 
