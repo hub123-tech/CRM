@@ -76,6 +76,7 @@ td{
  align-items:center;
  opacity:0;
  pointer-events:none;
+ transition: opacity 0.2s;
 }
 
 .modal-overlay.open{
@@ -101,10 +102,17 @@ input,select{
  padding:10px;
  border:1px solid var(--border);
  border-radius:6px;
+ width: 100%; /* Fix for alignment */
+ box-sizing: border-box; /* Fix for padding */
 }
 
 .actions-cell button{
  margin-right:6px;
+ cursor: pointer;
+ border: 1px solid var(--border);
+ background: white;
+ padding: 5px 10px;
+ border-radius: 4px;
 }
 </style>
 </head>
@@ -141,52 +149,63 @@ input,select{
 
 <div class="modal-overlay" id="modalOverlay">
 <div class="modal">
-
+<h3>Entry Details</h3>
+<br>
 <form id="salesForm" onsubmit="handleFormSubmit(event)">
 <input type="hidden" id="entryId">
 
 <div class="form-grid">
 <input id="entity" name="entity" placeholder="Entity" required>
 <input id="customerName" name="customerName" placeholder="Customer Name" required>
-<input id="speed" name="speed" placeholder="Speed">
+<input id="speed" name="speed" placeholder="Speed (e.g. 100Mbps)">
 <input id="location" name="location" placeholder="Location">
 
 <select id="connectivity" name="connectivity">
+<option value="" disabled selected>Select Connectivity</option>
 <option>Fiber</option>
 <option>Wireless</option>
 <option>LTE/5G</option>
 </select>
 
 <select id="deliveryStatus" name="deliveryStatus">
+<option value="" disabled selected>Select Status</option>
 <option>Pending</option>
 <option>Active</option>
 <option>Inactive</option>
 </select>
 
-<input id="months" name="months" placeholder="Months">
-<input id="devices" name="devices" placeholder="Devices">
-<input id="price" name="price" placeholder="Price">
+<input id="months" name="months" type="number" placeholder="Months">
+<input id="devices" name="devices" type="number" placeholder="Devices">
+<input id="price" name="price" type="number" placeholder="Price">
 
 <select id="paymentStatus" name="paymentStatus">
+<option value="" disabled selected>Payment Status</option>
 <option>Unpaid</option>
 <option>Paid</option>
 <option>Overdue</option>
 </select>
 
+<div>
+<label style="font-size:12px; color:#666">PO Expiry</label>
 <input type="date" id="poExpiryDate" name="poExpiryDate">
+</div>
+<div>
+<label style="font-size:12px; color:#666">Service Stop</label>
 <input type="date" id="serviceStopDate" name="serviceStopDate">
+</div>
 </div>
 
 <br>
-<button class="btn" type="submit">Save Record</button>
-<button class="btn" type="button" onclick="closeModal()">Cancel</button>
+<div style="text-align: right; margin-top: 20px;">
+    <button class="btn" type="button" onclick="closeModal()" style="background: #94a3b8; margin-right: 10px;">Cancel</button>
+    <button class="btn" type="submit">Save Record</button>
+</div>
 
 </form>
 
 </div>
 </div>
 
-<!-- ✅ SUPABASE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -195,13 +214,22 @@ input,select{
    SUPABASE CONNECTION
 ====================== */
 
-const supabaseUrl="https://jhvujuqzkjbprmshizcx.supabase.co";
-const supabaseKey="sb_publishable_F_SEkmGLAe00CNrXVbce6g_H1LK5006";
+// ⚠️ IMPORTANT: Use your 'anon' / 'public' key here. 
+// It usually starts with "eyJh..." (JWT format).
+const supabaseUrl = "https://jhvujuqzkjbprmshizcx.supabase.co";
+const supabaseKey = "PASTE_YOUR_REAL_ANON_KEY_HERE"; 
 
-const supabase=window.supabase.createClient(
- supabaseUrl,
- supabaseKey
-);
+// Initialize Client Safely
+let supabase = null;
+if (supabaseUrl && supabaseKey && supabaseKey.length > 20 && !supabaseKey.includes("PASTE")) {
+    try {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    } catch (err) {
+        console.error("Supabase Init Error:", err);
+    }
+} else {
+    console.warn("⚠️ SUPABASE NOT CONNECTED: Check your URL and Key in the code.");
+}
 
 /* ======================
    STATE
@@ -233,13 +261,17 @@ function closeModal(){
 ====================== */
 
 async function loadData(){
+ if(!supabase) return; // Prevent crash if keys are missing
 
  const {data,error}=await supabase
  .from("sales_entries")
  .select("*")
  .order("id",{ascending:false});
 
- if(error){console.log(error);return;}
+ if(error){
+     console.error("Error loading data:", error);
+     return;
+ }
 
  salesData=data||[];
  renderTable();
@@ -251,21 +283,38 @@ async function loadData(){
 
 async function handleFormSubmit(e){
  e.preventDefault();
+ 
+ if(!supabase) {
+     alert("Cannot save: Supabase connection is missing. Please check your API Key in the code.");
+     return;
+ }
 
  const formData=new FormData(e.target);
  const entry=Object.fromEntries(formData.entries());
 
- if(editingId){
-  await supabase.from("sales_entries")
-  .update(entry)
-  .eq("id",editingId);
- }else{
-  await supabase.from("sales_entries")
-  .insert([entry]);
- }
+ // Clean up empty numbers to avoid DB errors
+ if(entry.months === "") delete entry.months;
+ if(entry.devices === "") delete entry.devices;
+ if(entry.price === "") delete entry.price;
 
- closeModal();
- loadData();
+ try {
+     let error;
+     if(editingId){
+      const res = await supabase.from("sales_entries").update(entry).eq("id",editingId);
+      error = res.error;
+     }else{
+      const res = await supabase.from("sales_entries").insert([entry]);
+      error = res.error;
+     }
+
+     if(error) throw error;
+
+     closeModal();
+     loadData();
+ } catch (err) {
+     alert("Error saving: " + err.message);
+     console.error(err);
+ }
 }
 
 /* ======================
@@ -274,12 +323,15 @@ async function handleFormSubmit(e){
 
 async function deleteEntry(id){
  if(!confirm("Delete this record?")) return;
+ if(!supabase) return;
 
- await supabase.from("sales_entries")
- .delete()
- .eq("id",id);
-
- loadData();
+ const { error } = await supabase.from("sales_entries").delete().eq("id",id);
+ 
+ if(error) {
+     alert("Error deleting: " + error.message);
+ } else {
+     loadData();
+ }
 }
 
 /* ======================
@@ -307,6 +359,11 @@ function editEntry(id){
 function renderTable(){
  tableBody.innerHTML="";
 
+ if(salesData.length === 0) {
+     tableBody.innerHTML = "<tr><td colspan='13' style='text-align:center'>No records found</td></tr>";
+     return;
+ }
+
  salesData.forEach(item=>{
  tableBody.innerHTML+=`
  <tr>
@@ -315,7 +372,7 @@ function renderTable(){
  <td>${item.speed||""}</td>
  <td>${item.location||""}</td>
  <td>${item.connectivity||""}</td>
- <td>${item.deliveryStatus||""}</td>
+ <td>${getStatusBadge(item.deliveryStatus)}</td>
  <td>${item.months||""}</td>
  <td>${item.devices||""}</td>
  <td>${item.price||""}</td>
@@ -328,6 +385,16 @@ function renderTable(){
  </td>
  </tr>`;
  });
+}
+
+// Helper to make status look nice
+function getStatusBadge(status) {
+    if(!status) return "";
+    let color = "#64748b";
+    if(status === 'Active') color = "#16a34a";
+    if(status === 'Pending') color = "#ca8a04";
+    if(status === 'Inactive') color = "#dc2626";
+    return `<span style="color:${color}; font-weight:bold">${status}</span>`;
 }
 
 /* ======================
