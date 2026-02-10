@@ -40,7 +40,7 @@ td{ padding:12px; border-bottom:1px solid var(--border); color:var(--text-light)
 }
 
 .modal-overlay.open{ display:flex; }
-.modal{ background:white; width:90%; max-width:800px; border-radius:16px; padding:24px; }
+.modal{ background:white; width:90%; max-width:800px; border-radius:16px; padding:24px; max-height: 90vh; overflow-y: auto; }
 
 .form-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
 input, select{ padding:10px; border:1px solid var(--border); border-radius:6px; width:100%; box-sizing:border-box; }
@@ -134,7 +134,8 @@ input, select{ padding:10px; border:1px solid var(--border); border-radius:6px; 
 const supabaseUrl = "https://jhvujuqzkjbprmshizcx.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodnVqdXF6a2picHJtc2hpemN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDU0NjcsImV4cCI6MjA4NjIyMTQ2N30.sa2KCYFNKipT_vz_4uvWX4h5lD54Fw4DW2PFa8Tck6A";
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// Fixed variable name to avoid "already declared" error
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let salesData = [];
 let editingId = null;
@@ -147,7 +148,6 @@ const tableBody = document.getElementById('tableBody');
    FUNCTIONS
 ====================== */
 
-// 1. OPEN MODAL (The fix: Ensure this is defined globally)
 window.openModal = function() {
     editingId = null;
     document.getElementById('modalTitle').innerText = "New Entry";
@@ -159,28 +159,26 @@ window.closeModal = function() {
     modal.classList.remove('open');
 }
 
-// 2. LOAD DATA
 async function loadData() {
-    const { data, error } = await supabase
-        .from("sales_entries")
-        .select("*")
-        .order("id", { ascending: false });
+    try {
+        const { data, error } = await supabaseClient
+            .from("sales_entries")
+            .select("*")
+            .order("id", { ascending: false });
 
-    if (error) {
-        console.error("Supabase Error:", error);
-        tableBody.innerHTML = `<tr><td colspan="13" style="color:red">Error: ${error.message}. Make sure table 'sales_entries' exists.</td></tr>`;
-        return;
+        if (error) throw error;
+        salesData = data || [];
+        renderTable();
+    } catch (err) {
+        console.error("Load Error:", err);
+        tableBody.innerHTML = `<tr><td colspan="13" style="color:red; text-align:center;">Table check: Ensure 'sales_entries' exists in Supabase.</td></tr>`;
     }
-
-    salesData = data || [];
-    renderTable();
 }
 
-// 3. RENDER TABLE
 function renderTable() {
     tableBody.innerHTML = "";
     if (salesData.length === 0) {
-        tableBody.innerHTML = "<tr><td colspan='13' style='text-align:center'>No records found</td></tr>";
+        tableBody.innerHTML = "<tr><td colspan='13' style='text-align:center'>No records found. Click '+ Add New Entry' to start.</td></tr>";
         return;
     }
 
@@ -208,26 +206,29 @@ function renderTable() {
     });
 }
 
-// 4. SAVE
 form.onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     const entry = Object.fromEntries(formData.entries());
 
+    // Convert empty number strings to nulls
+    ['months', 'devices', 'price'].forEach(key => {
+        if (entry[key] === "") entry[key] = null;
+    });
+
     try {
         if (editingId) {
-            await supabase.from("sales_entries").update(entry).eq("id", editingId);
+            await supabaseClient.from("sales_entries").update(entry).eq("id", editingId);
         } else {
-            await supabase.from("sales_entries").insert([entry]);
+            await supabaseClient.from("sales_entries").insert([entry]);
         }
         closeModal();
         loadData();
     } catch (err) {
-        alert("Error saving record!");
+        alert("Error saving record. Check database permissions.");
     }
 };
 
-// 5. EDIT/DELETE
 window.editEntry = (id) => {
     const item = salesData.find(x => x.id === id);
     if (!item) return;
@@ -243,11 +244,11 @@ window.editEntry = (id) => {
 
 window.deleteEntry = async (id) => {
     if (!confirm("Delete this record?")) return;
-    await supabase.from("sales_entries").delete().eq("id", id);
+    await supabaseClient.from("sales_entries").delete().eq("id", id);
     loadData();
 };
 
-// Start
+// Initial run
 loadData();
 </script>
 
