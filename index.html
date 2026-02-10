@@ -1,90 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Company CRM Cloud</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise Sales Tracker</title>
 
 <style>
+:root {
+ --primary:#2563eb;
+ --bg:#f8fafc;
+ --surface:#ffffff;
+ --text-main:#1e293b;
+ --text-light:#64748b;
+ --border:#e2e8f0;
+ --danger:#ef4444;
+}
+
 body{
- font-family: Arial;
- background:#f4f6fb;
+ font-family:Arial;
+ background:var(--bg);
+ margin:0;
  padding:20px;
 }
 
-.header{
+header{
  display:flex;
  justify-content:space-between;
- align-items:center;
  background:white;
- padding:15px;
- border-radius:10px;
- box-shadow:0 3px 8px rgba(0,0,0,.08);
+ padding:16px 24px;
+ border-radius:12px;
  margin-bottom:20px;
 }
 
-button{
- background:#2563eb;
+.btn{
+ background:var(--primary);
  color:white;
  border:none;
- padding:10px 16px;
- border-radius:6px;
+ padding:10px 20px;
+ border-radius:8px;
  cursor:pointer;
+}
+
+.table-container{
+ background:white;
+ border-radius:12px;
+ overflow:auto;
 }
 
 table{
  width:100%;
  border-collapse:collapse;
- background:white;
- border-radius:10px;
- overflow:hidden;
- box-shadow:0 3px 8px rgba(0,0,0,.08);
-}
-
-th,td{
- padding:10px;
- border-bottom:1px solid #eee;
- font-size:14px;
- text-align:left;
 }
 
 th{
  background:#f1f5f9;
+ padding:12px;
+ text-align:left;
 }
 
-.modal{
+td{
+ padding:12px;
+ border-bottom:1px solid var(--border);
+ color:var(--text-light);
+}
+
+.modal-overlay{
  position:fixed;
  top:0;
  left:0;
  width:100%;
  height:100%;
- background:rgba(0,0,0,.4);
- display:none;
+ background:rgba(0,0,0,0.5);
+ display:flex;
  justify-content:center;
  align-items:center;
+ opacity:0;
+ pointer-events:none;
 }
 
-.modal-box{
+.modal-overlay.open{
+ opacity:1;
+ pointer-events:auto;
+}
+
+.modal{
  background:white;
- padding:20px;
- border-radius:10px;
- width:400px;
+ width:90%;
+ max-width:800px;
+ border-radius:16px;
+ padding:24px;
+}
+
+.form-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+ gap:16px;
 }
 
 input,select{
- width:100%;
- padding:8px;
- margin:5px 0;
+ padding:10px;
+ border:1px solid var(--border);
+ border-radius:6px;
+}
+
+.actions-cell button{
+ margin-right:6px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-<h2>🚀 Company CRM (Cloud Version)</h2>
-<button onclick="openModal()">+ Add Entry</button>
-</div>
+<header>
+<h2>🚀 Sales & Service Tracker</h2>
+<button class="btn" onclick="openModal()">+ Add New Entry</button>
+</header>
 
+<div class="table-container">
 <table>
 <thead>
 <tr>
@@ -97,165 +129,214 @@ input,select{
 <th>Months</th>
 <th>Devices</th>
 <th>Price</th>
-<th>Excl GST</th>
-<th>Incl GST</th>
 <th>Payment</th>
-<th>Start</th>
-<th>End</th>
 <th>PO Expiry</th>
 <th>Service Stop</th>
+<th>Actions</th>
 </tr>
 </thead>
-
 <tbody id="tableBody"></tbody>
 </table>
+</div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-<div class="modal-box">
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal">
 
-<input id="entity" placeholder="Entity">
-<input id="customerName" placeholder="Customer Name">
-<input id="speed" placeholder="Speed">
-<input id="location" placeholder="Location">
-<input id="connectivity" placeholder="Connectivity">
-<input id="deliveryStatus" placeholder="Status">
-<input id="months" placeholder="Months">
-<input id="devices" placeholder="Devices">
-<input id="price" placeholder="Price">
-<input id="exclGst" placeholder="Excl GST">
-<input id="inclGst" placeholder="Incl GST">
-<input id="paymentStatus" placeholder="Payment Status">
-<input id="startDate" type="date">
-<input id="endDate" type="date">
-<input id="poExpiryDate" type="date">
-<input id="serviceStopDate" type="date">
+<form id="salesForm" onsubmit="handleFormSubmit(event)">
+<input type="hidden" id="entryId">
+
+<div class="form-grid">
+<input id="entity" name="entity" placeholder="Entity" required>
+<input id="customerName" name="customerName" placeholder="Customer Name" required>
+<input id="speed" name="speed" placeholder="Speed">
+<input id="location" name="location" placeholder="Location">
+
+<select id="connectivity" name="connectivity">
+<option>Fiber</option>
+<option>Wireless</option>
+<option>LTE/5G</option>
+</select>
+
+<select id="deliveryStatus" name="deliveryStatus">
+<option>Pending</option>
+<option>Active</option>
+<option>Inactive</option>
+</select>
+
+<input id="months" name="months" placeholder="Months">
+<input id="devices" name="devices" placeholder="Devices">
+<input id="price" name="price" placeholder="Price">
+
+<select id="paymentStatus" name="paymentStatus">
+<option>Unpaid</option>
+<option>Paid</option>
+<option>Overdue</option>
+</select>
+
+<input type="date" id="poExpiryDate" name="poExpiryDate">
+<input type="date" id="serviceStopDate" name="serviceStopDate">
+</div>
 
 <br>
-<button onclick="saveEntry()">Save</button>
-<button onclick="closeModal()">Close</button>
+<button class="btn" type="submit">Save Record</button>
+<button class="btn" type="button" onclick="closeModal()">Cancel</button>
+
+</form>
 
 </div>
 </div>
 
-<!-- SUPABASE SDK -->
+<!-- ✅ SUPABASE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/* =============================
+
+/* ======================
    SUPABASE CONNECTION
-============================= */
+====================== */
 
-const supabaseUrl = "https://jhvujuqzkjbprmshizcx.supabase.coL";
-const supabaseKey = "sb_publishable_F_SEkmGLAe00CNrXVbce6g_H1LK5006;
+const supabaseUrl="PASTE_YOUR_PROJECT_URL";
+const supabaseKey="PASTE_YOUR_sb_publishable_KEY";
 
-const supabase = window.supabase.createClient(
+const supabase=window.supabase.createClient(
  supabaseUrl,
  supabaseKey
 );
 
-console.log("Supabase Connected");
+/* ======================
+   STATE
+====================== */
 
-/* =============================
-   UI FUNCTIONS
-============================= */
+let salesData=[];
+let editingId=null;
+
+const modal=document.getElementById('modalOverlay');
+const form=document.getElementById('salesForm');
+const tableBody=document.getElementById('tableBody');
+
+/* ======================
+   MODAL FUNCTIONS
+====================== */
 
 function openModal(){
- document.getElementById("modal").style.display="flex";
+ editingId=null;
+ form.reset();
+ modal.classList.add('open');
 }
 
 function closeModal(){
- document.getElementById("modal").style.display="none";
+ modal.classList.remove('open');
 }
 
-/* =============================
-   SAVE ENTRY (CLOUD)
-============================= */
+/* ======================
+   LOAD DATA
+====================== */
 
-async function saveEntry(){
+async function loadData(){
 
- const data = {
-  entity: entity.value,
-  customerName: customerName.value,
-  speed: speed.value,
-  location: location.value,
-  connectivity: connectivity.value,
-  deliveryStatus: deliveryStatus.value,
-  months: months.value,
-  devices: devices.value,
-  price: price.value,
-  exclGst: exclGst.value,
-  inclGst: inclGst.value,
-  paymentStatus: paymentStatus.value,
-  startDate: startDate.value,
-  endDate: endDate.value,
-  poExpiryDate: poExpiryDate.value,
-  serviceStopDate: serviceStopDate.value
- };
+ const {data,error}=await supabase
+ .from("sales_entries")
+ .select("*")
+ .order("id",{ascending:false});
 
- const { error } = await supabase
-   .from("sales_entries")
-   .insert([data]);
+ if(error){console.log(error);return;}
 
- if(error){
-   alert("Error saving data");
-   console.log(error);
-   return;
+ salesData=data||[];
+ renderTable();
+}
+
+/* ======================
+   SAVE ENTRY
+====================== */
+
+async function handleFormSubmit(e){
+ e.preventDefault();
+
+ const formData=new FormData(e.target);
+ const entry=Object.fromEntries(formData.entries());
+
+ if(editingId){
+  await supabase.from("sales_entries")
+  .update(entry)
+  .eq("id",editingId);
+ }else{
+  await supabase.from("sales_entries")
+  .insert([entry]);
  }
 
  closeModal();
  loadData();
 }
 
-/* =============================
-   LOAD DATA FROM CLOUD
-============================= */
+/* ======================
+   DELETE
+====================== */
 
-async function loadData(){
+async function deleteEntry(id){
+ if(!confirm("Delete this record?")) return;
 
- const { data, error } = await supabase
-   .from("sales_entries")
-   .select("*")
-   .order("id",{ascending:false});
+ await supabase.from("sales_entries")
+ .delete()
+ .eq("id",id);
 
- if(error){
-   console.log(error);
-   return;
- }
+ loadData();
+}
 
- const table=document.getElementById("tableBody");
- table.innerHTML="";
+/* ======================
+   EDIT
+====================== */
 
- data.forEach(d=>{
-  table.innerHTML+=`
-   <tr>
-   <td>${d.entity||""}</td>
-   <td>${d.customername||d.customerName||""}</td>
-   <td>${d.speed||""}</td>
-   <td>${d.location||""}</td>
-   <td>${d.connectivity||""}</td>
-   <td>${d.deliverystatus||d.deliveryStatus||""}</td>
-   <td>${d.months||""}</td>
-   <td>${d.devices||""}</td>
-   <td>${d.price||""}</td>
-   <td>${d.exclgst||d.exclGst||""}</td>
-   <td>${d.inclgst||d.inclGst||""}</td>
-   <td>${d.paymentstatus||d.paymentStatus||""}</td>
-   <td>${d.startdate||d.startDate||""}</td>
-   <td>${d.enddate||d.endDate||""}</td>
-   <td>${d.poexpirydate||d.poExpiryDate||""}</td>
-   <td>${d.servicestopdate||d.serviceStopDate||""}</td>
-   </tr>
-  `;
+function editEntry(id){
+ const item=salesData.find(x=>x.id===id);
+ if(!item) return;
+
+ editingId=id;
+
+ Object.keys(item).forEach(k=>{
+  const el=document.getElementById(k);
+  if(el) el.value=item[k];
+ });
+
+ modal.classList.add('open');
+}
+
+/* ======================
+   RENDER TABLE
+====================== */
+
+function renderTable(){
+ tableBody.innerHTML="";
+
+ salesData.forEach(item=>{
+ tableBody.innerHTML+=`
+ <tr>
+ <td>${item.entity||""}</td>
+ <td>${item.customerName||""}</td>
+ <td>${item.speed||""}</td>
+ <td>${item.location||""}</td>
+ <td>${item.connectivity||""}</td>
+ <td>${item.deliveryStatus||""}</td>
+ <td>${item.months||""}</td>
+ <td>${item.devices||""}</td>
+ <td>${item.price||""}</td>
+ <td>${item.paymentStatus||""}</td>
+ <td>${item.poExpiryDate||""}</td>
+ <td>${item.serviceStopDate||""}</td>
+ <td class="actions-cell">
+ <button onclick="editEntry(${item.id})">✏️</button>
+ <button onclick="deleteEntry(${item.id})">🗑️</button>
+ </td>
+ </tr>`;
  });
 }
 
-/* =============================
+/* ======================
    INITIAL LOAD
-============================= */
+====================== */
 
 loadData();
 
 </script>
+
 </body>
 </html>
