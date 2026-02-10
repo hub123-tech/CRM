@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise Sales Tracker</title>
+    <title>Enterprise Sales Tracker - Authorized Access</title>
     <style>
         :root { --primary:#2563eb; --bg:#f8fafc; --border:#e2e8f0; }
         body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); gap: 15px; }
         
+        /* AUTH OVERLAY - Hide CRM until logged in */
+        #authOverlay { position: fixed; inset: 0; background: #0f172a; display: flex; justify-content: center; align-items: center; z-index: 2000; color: white; }
+        .auth-card { background: white; color: #1e293b; padding: 40px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); gap: 15px; }
         .controls { display: flex; gap: 10px; align-items: center; flex-grow: 1; justify-content: flex-end; }
         #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 300px; font-size: 14px; }
         .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         
-        /* Color Coding Badges */
         .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; text-transform: uppercase; border: 1px solid transparent; }
         .bg-green { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
         .bg-red { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
@@ -38,11 +42,23 @@
 </head>
 <body>
 
+<div id="authOverlay">
+    <div class="auth-card">
+        <h2>Transmedia CRM</h2>
+        <p>Enter authorized credentials</p>
+        <input type="email" id="loginEmail" placeholder="Email Address">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button class="btn" style="width:100%" onclick="handleLogin()">Sign In</button>
+        <p id="errorMsg" style="color:red; font-size:12px; display:none; margin-top:10px;"></p>
+    </div>
+</div>
+
 <header>
     <h2 style="margin:0;">Transmedia Sales Tracker</h2>
     <div class="controls">
         <input type="text" id="searchInput" placeholder="Search Customer or Entity..." onkeyup="filterTable()">
         <button class="btn" onclick="openModal()">+ Add New Entry</button>
+        <button class="btn" style="background:#64748b; margin-left:10px;" onclick="handleLogout()">Logout</button>
     </div>
 </header>
 
@@ -57,7 +73,7 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="20" style="text-align:center">Loading records...</td></tr>
+            <tr><td colspan="20" style="text-align:center">Waiting for authentication...</td></tr>
         </tbody>
     </table>
 </div>
@@ -122,9 +138,43 @@
     let salesData = [];
     let editingId = null;
 
+    // --- 1. AUTH LOGIC ---
+    async function handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPass').value;
+        const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            const errEl = document.getElementById('errorMsg');
+            errEl.innerText = error.message;
+            errEl.style.display = 'block';
+        } else {
+            document.getElementById('authOverlay').style.display = 'none';
+            loadData();
+        }
+    }
+
+    async function handleLogout() {
+        await dbClient.auth.signOut();
+        location.reload();
+    }
+
+    // Check if user is already logged in on page load
+    async function checkUser() {
+        const { data: { user } } = await dbClient.auth.getUser();
+        if (user) {
+            document.getElementById('authOverlay').style.display = 'none';
+            loadData();
+        }
+    }
+
+    // --- 2. DATA LOGIC ---
     async function loadData() {
         const { data, error } = await dbClient.from("sales_entries").select("*").order("id", { ascending: false });
-        if (error) return;
+        if (error) {
+            if (error.code === "PGRST301") alert("Access Denied: Your email is not in the authorized list.");
+            return;
+        }
         salesData = data || [];
         renderTable(salesData);
     }
@@ -196,9 +246,13 @@
         const formData = new FormData(e.target);
         const entry = Object.fromEntries(formData.entries());
 
+        // CRITICAL FIX: Convert empty strings to NULL for database
         Object.keys(entry).forEach(key => {
-            if (entry[key] === "") entry[key] = null;
-            else if (['months', 'devices', 'price', 'exclGst', 'inclGst'].includes(key)) entry[key] = Number(entry[key]);
+            if (entry[key] === "" || entry[key] === undefined) {
+                entry[key] = null;
+            } else if (['months', 'devices', 'price', 'exclGst', 'inclGst'].includes(key)) {
+                entry[key] = Number(entry[key]);
+            }
         });
 
         const { error } = editingId 
@@ -221,12 +275,13 @@
 
     window.deleteEntry = async (id) => {
         if (confirm("Delete permanently?")) {
-            await dbClient.from("sales_entries").delete().eq("id", id);
-            loadData();
+            const { error } = await dbClient.from("sales_entries").delete().eq("id", id);
+            if (error) alert("Delete error: " + error.message);
+            else loadData();
         }
     };
 
-    loadData();
+    checkUser();
 </script>
 </body>
 </html>
