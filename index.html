@@ -13,20 +13,12 @@
         .auth-card { background: white; color: #1e293b; padding: 30px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
 
-        /* HEADER & SEARCH FIX */
+        /* HEADER & SEARCH */
         header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: white; 
-            padding: 16px 24px; 
-            border-radius: 12px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-            gap: 15px; 
-            flex-wrap: wrap; 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); gap: 15px; flex-wrap: wrap; 
         }
-        
         .controls { display: flex; gap: 10px; align-items: center; flex-grow: 1; justify-content: flex-end; flex-wrap: wrap; }
         #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 300px; font-size: 14px; }
         .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
@@ -51,13 +43,13 @@
         .bg-red { background: #fee2e2; color: #991b1b; }
         .bg-yellow { background: #fef9c3; color: #854d0e; }
 
-        /* MODAL */
+        /* MODAL (FIXED TO SHOW MISSING FIELDS) */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.open { display: flex; }
-        .modal { background: white; width: 95%; max-width: 900px; border-radius: 16px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .modal { background: white; width: 95%; max-width: 1000px; border-radius: 16px; padding: 25px; max-height: 90vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
         input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing: border-box; }
-        label { font-size: 12px; font-weight: bold; color: #334155; display: block; margin-bottom: 4px; }
+        label { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -100,7 +92,7 @@
 
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
-        <h3>Entry Details</h3>
+        <h3 style="margin-top:0;">Entry Details</h3>
         <form id="salesForm">
             <div class="form-grid">
                 <div><label>Entity</label><input name="entity" required></div>
@@ -109,7 +101,13 @@
                 <div><label>Location</label><input name="location"></div>
                 <div><label>Connectivity</label><select name="connectivity"><option value="Fiber">Fiber</option><option value="Wireless">Wireless</option></select></div>
                 <div><label>Service Status</label><select name="deliveryStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                
+                <div><label>Months</label><input name="months" type="number"></div>
+                <div><label>Devices</label><input name="devices" type="number"></div>
                 <div><label>Price</label><input name="price" type="number"></div>
+                <div><label>Excl. GST</label><input name="exclGst" type="number"></div>
+                <div><label>Incl. GST</label><input name="inclGst" type="number"></div>
+                
                 <div><label>Payment Status</label><select name="paymentStatus"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option></select></div>
                 <div><label>Payment Date</label><input type="date" name="paymentDate"></div>
                 <div><label>Start Date</label><input type="date" name="startDate"></div>
@@ -178,9 +176,9 @@
                 <td>${item.serviceStopDate || ""}</td>
                 <td>${item.poRenewed || ""}</td>
                 <td>${item.poRenewalDate || ""}</td>
-                <td>
-                    <button onclick="editEntry(${item.id})" style="border:none; background:none; cursor:pointer;">✏️</button>
-                    <button onclick="deleteEntry(${item.id})" style="border:none; background:none; cursor:pointer;">🗑️</button>
+                <td style="white-space:nowrap;">
+                    <button onclick="editEntry(${item.id})" style="border:none; background:none; cursor:pointer; font-size:16px;">✏️</button>
+                    <button onclick="deleteEntry(${item.id})" style="border:none; background:none; cursor:pointer; font-size:16px;">🗑️</button>
                 </td>
             </tr>
         `).join('');
@@ -191,24 +189,26 @@
         renderTable(salesData.filter(i => (i.customerName || "").toLowerCase().includes(q)));
     }
 
-    /* DELETE FIX: Ensure you set policy to 'ALL' in Supabase */
     window.deleteEntry = async (id) => {
         if (!confirm("Delete this entry?")) return;
         const { error } = await dbClient.from("sales_entries").delete().eq("id", id);
-        if (error) alert("Error: Check if Supabase Policy is set to 'ALL'. " + error.message);
+        if (error) alert("Error deleting: " + error.message);
         else loadData();
     };
 
     document.getElementById('salesForm').onsubmit = async (e) => {
         e.preventDefault();
         const entry = Object.fromEntries(new FormData(e.target).entries());
+        // Clean empty values to null
         Object.keys(entry).forEach(k => { if(entry[k] === "") entry[k] = null; });
+        
         const { error } = editingId ? await dbClient.from("sales_entries").update(entry).eq("id", editingId) : await dbClient.from("sales_entries").insert([entry]);
         if (error) alert(error.message); else { closeModal(); loadData(); }
     };
 
     function openModal() { editingId = null; document.getElementById('salesForm').reset(); document.getElementById('modalOverlay').classList.add('open'); }
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    
     window.editEntry = (id) => {
         editingId = id;
         const item = salesData.find(x => x.id === id);
