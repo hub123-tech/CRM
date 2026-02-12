@@ -15,13 +15,12 @@
         #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 250px; font-size: 14px; }
         .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         .table-container { background: white; border-radius: 12px; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; min-width: 2200px; }
+        table { width: 100%; border-collapse: collapse; min-width: 2400px; } /* Increased width for new column */
         th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; color: #475569; text-transform: uppercase; }
         td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: #1e293b; }
         .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; }
         .bg-green { background: #dcfce7; color: #166534; }
         .bg-red { background: #fee2e2; color: #991b1b; }
-        /* 50-Day Warning Style */
         .expiry-warning { background-color: #fff7ed !important; border-left: 5px solid #f97316; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.open { display: flex; }
@@ -46,7 +45,7 @@
 <header>
     <h2>Transmedia Sales Tracker</h2>
     <div class="controls">
-        <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterTable()">
+        <input type="text" id="searchInput" placeholder="Search Client or PO..." onkeyup="filterTable()">
         <button class="btn" style="background:#059669;" onclick="exportToCSV()">📊 Export CSV</button>
         <button class="btn" onclick="openModal()">+ Add New Entry</button>
         <button class="btn" style="background:#64748b;" onclick="handleLogout()">Logout</button>
@@ -57,7 +56,9 @@
     <table>
         <thead>
             <tr>
-                <th>Client Name</th><th>Customer Name</th><th>Speed</th><th>Location</th><th>Connectivity</th>
+                <th>Client Name</th>
+                <th>Customer Name</th>
+                <th>PO Number</th> <th>Speed</th><th>Location</th><th>Connectivity</th>
                 <th>Status</th><th>Months</th><th>Devices</th><th>Price for 1 device</th><th>Total exclusive gst</th>
                 <th>Total inclusive gst</th><th>Payment Status</th><th>Payment Date</th><th>Start Date</th>
                 <th>End Date</th><th>PO Expiry</th><th>Service Status</th><th>Service Stop Date</th><th>PO Renewed?</th><th>Renewal Date</th><th>Actions</th>
@@ -74,7 +75,7 @@
             <div class="form-grid">
                 <div><label>Client Name</label><input name="clientName" required></div>
                 <div><label>Customer Name</label><input name="customerName" required></div>
-                <div><label>Speed</label><input name="speed"></div>
+                <div><label>PO Number</label><input name="poNumber" placeholder="e.g. PO-12345"></div> <div><label>Speed</label><input name="speed"></div>
                 <div><label>Location</label><input name="location"></div>
                 <div><label>Connectivity</label>
                     <select name="connectivity">
@@ -135,7 +136,6 @@
 
     function renderTable(data) {
         tableBody.innerHTML = data.map(item => {
-            // Calculate 50-day warning
             const expiry = new Date(item.poExpiryDate);
             const today = new Date();
             const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
@@ -145,7 +145,7 @@
                 <tr ${rowClass}>
                     <td>${item.clientName || ""}</td>
                     <td>${item.customerName || ""}</td>
-                    <td>${item.speed || ""}</td>
+                    <td><strong>${item.poNumber || ""}</strong></td> <td>${item.speed || ""}</td>
                     <td>${item.location || ""}</td>
                     <td>${item.connectivity || ""}</td>
                     <td><span class="badge ${item.deliveryStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.deliveryStatus || ""}</span></td>
@@ -174,8 +174,8 @@
 
     function exportToCSV() {
         if(salesData.length === 0) return;
-        const headers = ["Client Name,Customer Name,Speed,Location,Connectivity,Status,Months,Devices,Price per Device,Excl GST,Incl GST,Payment,Payment Date,Start Date,End Date,PO Expiry,Service Status,Stop Date,PO Renewed,Renewal Date"];
-        const rows = salesData.map(i => [i.clientName, i.customerName, i.speed, i.location, i.connectivity, i.deliveryStatus, i.months, i.devices, i.price, i.exclGst, i.inclGst, i.paymentStatus, i.paymentDate, i.startDate, i.endDate, i.poExpiryDate, i.serviceStatus, i.serviceStopDate, i.poRenewed, i.poRenewalDate].join(","));
+        const headers = ["Client Name,Customer Name,PO Number,Speed,Location,Connectivity,Status,Months,Devices,Price per Device,Excl GST,Incl GST,Payment,Payment Date,Start Date,End Date,PO Expiry,Service Status,Stop Date,PO Renewed,Renewal Date"];
+        const rows = salesData.map(i => [i.clientName, i.customerName, i.poNumber, i.speed, i.location, i.connectivity, i.deliveryStatus, i.months, i.devices, i.price, i.exclGst, i.inclGst, i.paymentStatus, i.paymentDate, i.startDate, i.endDate, i.poExpiryDate, i.serviceStatus, i.serviceStopDate, i.poRenewed, i.poRenewalDate].join(","));
         const blob = new Blob([[headers, ...rows].join("\n")], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'Transmedia_Report.csv'; a.click();
@@ -183,7 +183,11 @@
 
     function filterTable() {
         const q = searchInput.value.toLowerCase();
-        renderTable(salesData.filter(i => (i.customerName || "").toLowerCase().includes(q) || (i.clientName || "").toLowerCase().includes(q)));
+        renderTable(salesData.filter(i => 
+            (i.customerName || "").toLowerCase().includes(q) || 
+            (i.clientName || "").toLowerCase().includes(q) || 
+            (i.poNumber || "").toLowerCase().includes(q) // Added PO search
+        ));
     }
 
     window.deleteEntry = async (id) => {
