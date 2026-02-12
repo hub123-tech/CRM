@@ -7,47 +7,24 @@
     <style>
         :root { --primary:#2563eb; --bg:#f8fafc; --border:#e2e8f0; }
         body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        
-        /* AUTH SCREEN */
         #authOverlay { position: fixed; inset: 0; background: #0f172a; display: flex; justify-content: center; align-items: center; z-index: 2000; color: white; }
-        .auth-card { background: white; color: #1e293b; padding: 30px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .auth-card { background: white; color: #1e293b; padding: 30px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; }
         .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-
-        /* HEADER & SEARCH */
-        header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); gap: 15px; flex-wrap: wrap; 
-        }
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); gap: 15px; flex-wrap: wrap; }
         .controls { display: flex; gap: 10px; align-items: center; flex-grow: 1; justify-content: flex-end; flex-wrap: wrap; }
-        #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 300px; font-size: 14px; }
+        #searchInput { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 250px; font-size: 14px; }
         .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
-
-        /* MOBILE VIEW */
-        @media (max-width: 600px) {
-            header { flex-direction: column; align-items: stretch; padding: 15px; }
-            .controls { flex-direction: column; align-items: stretch; width: 100%; }
-            #searchInput { max-width: none; margin-bottom: 5px; }
-            .btn { width: 100%; margin-left: 0 !important; text-align: center; }
-            h2 { text-align: center; font-size: 22px; margin: 0; }
-        }
-
-        /* TABLE */
         .table-container { background: white; border-radius: 12px; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; min-width: 1800px; }
+        table { width: 100%; border-collapse: collapse; min-width: 2200px; }
         th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; color: #475569; text-transform: uppercase; }
         td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: #1e293b; }
-        
         .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; }
         .bg-green { background: #dcfce7; color: #166534; }
         .bg-red { background: #fee2e2; color: #991b1b; }
-        .bg-yellow { background: #fef9c3; color: #854d0e; }
-
-        /* MODAL (FIXED TO SHOW MISSING FIELDS) */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.open { display: flex; }
-        .modal { background: white; width: 95%; max-width: 1000px; border-radius: 16px; padding: 25px; max-height: 90vh; overflow-y: auto; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .modal { background: white; width: 95%; max-width: 1100px; border-radius: 16px; padding: 25px; max-height: 90vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
         input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; box-sizing: border-box; }
         label { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; }
     </style>
@@ -57,7 +34,6 @@
 <div id="authOverlay">
     <div class="auth-card">
         <h2>Transmedia CRM</h2>
-        <p>Enter authorized credentials</p>
         <input type="email" id="loginEmail" placeholder="Email Address">
         <input type="password" id="loginPass" placeholder="Password">
         <button class="btn" style="width:100%" onclick="handleLogin()">Sign In</button>
@@ -68,7 +44,8 @@
 <header>
     <h2>Transmedia Sales Tracker</h2>
     <div class="controls">
-        <input type="text" id="searchInput" placeholder="Search Customer..." onkeyup="filterTable()">
+        <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterTable()">
+        <button class="btn" style="background:#059669;" onclick="exportToCSV()">📊 Export CSV</button>
         <button class="btn" onclick="openModal()">+ Add New Entry</button>
         <button class="btn" style="background:#64748b;" onclick="handleLogout()">Logout</button>
     </div>
@@ -78,15 +55,13 @@
     <table>
         <thead>
             <tr>
-                <th>Entity</th><th>Customer Name</th><th>Speed</th><th>Location</th><th>Connectivity</th>
-                <th>Status</th><th>Months</th><th>Devices</th><th>Price</th><th>Excl. GST</th>
-                <th>Incl. GST</th><th>Payment Status</th><th>Payment Date</th><th>Start Date</th>
-                <th>End Date</th><th>PO Expiry</th><th>Stop Date</th><th>PO Renewed?</th><th>Renewal Date</th><th>Actions</th>
+                <th>Client Name</th><th>Customer Name</th><th>Speed</th><th>Location</th><th>Connectivity</th>
+                <th>Status</th><th>Months</th><th>Devices</th><th>Price for 1 device</th><th>Total exclusive GST</th>
+                <th>Total inclusive GST</th><th>Payment Status</th><th>Payment Date</th><th>Start Date</th>
+                <th>End Date</th><th>PO Expiry</th><th>Service Status</th><th>Service Stop Date</th><th>PO Renewed?</th><th>Renewal Date</th><th>Actions</th>
             </tr>
         </thead>
-        <tbody id="tableBody">
-            <tr><td colspan="20" style="text-align:center; padding:20px;">Loading...</td></tr>
-        </tbody>
+        <tbody id="tableBody"></tbody>
     </table>
 </div>
 
@@ -95,25 +70,34 @@
         <h3 style="margin-top:0;">Entry Details</h3>
         <form id="salesForm">
             <div class="form-grid">
-                <div><label>Entity</label><input name="entity" required></div>
+                <div><label>Client Name</label><input name="clientName" required></div>
                 <div><label>Customer Name</label><input name="customerName" required></div>
                 <div><label>Speed</label><input name="speed"></div>
                 <div><label>Location</label><input name="location"></div>
-                <div><label>Connectivity</label><select name="connectivity"><option value="Fiber">Fiber</option><option value="Wireless">Wireless</option></select></div>
-                <div><label>Service Status</label><select name="deliveryStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                
+                <div><label>Connectivity</label>
+                    <select name="connectivity">
+                        <option value="Enterprise Wi-Fi">Enterprise Wi-Fi</option>
+                        <option value="ILL">ILL</option>
+                    </select>
+                </div>
+                <div><label>Delivery Status</label><select name="deliveryStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                 <div><label>Months</label><input name="months" type="number"></div>
                 <div><label>Devices</label><input name="devices" type="number"></div>
-                <div><label>Price</label><input name="price" type="number"></div>
-                <div><label>Excl. GST</label><input name="exclGst" type="number"></div>
-                <div><label>Incl. GST</label><input name="inclGst" type="number"></div>
-                
+                <div><label>Price for 1 device</label><input name="price" type="number"></div>
+                <div><label>Total exclusive GST</label><input name="exclGst" type="number"></div>
+                <div><label>Total inclusive GST</label><input name="inclGst" type="number"></div>
                 <div><label>Payment Status</label><select name="paymentStatus"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option></select></div>
                 <div><label>Payment Date</label><input type="date" name="paymentDate"></div>
                 <div><label>Start Date</label><input type="date" name="startDate"></div>
                 <div><label>End Date</label><input type="date" name="endDate"></div>
                 <div><label>PO Expiry</label><input type="date" name="poExpiryDate"></div>
-                <div><label>Service Stop</label><input type="date" name="serviceStopDate"></div>
+                <div><label>Service Status</label>
+                    <select name="serviceStatus">
+                        <option value="Active">Active</option>
+                        <option value="Stop">Stop</option>
+                    </select>
+                </div>
+                <div><label>Service Stop Date</label><input type="date" name="serviceStopDate"></div>
                 <div><label>PO Renewed?</label><select name="poRenewed"><option value="Pending">Pending</option><option value="Renewed">Renewed</option></select></div>
                 <div><label>Renewal Date</label><input type="date" name="poRenewalDate"></div>
             </div>
@@ -135,16 +119,9 @@
     let editingId = null;
 
     async function handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPass').value;
-        const { error } = await dbClient.auth.signInWithPassword({ email, password });
-        if (error) {
-            document.getElementById('errorMsg').innerText = error.message;
-            document.getElementById('errorMsg').style.display = 'block';
-        } else {
-            document.getElementById('authOverlay').style.display = 'none';
-            loadData();
-        }
+        const { error } = await dbClient.auth.signInWithPassword({ email: loginEmail.value, password: loginPass.value });
+        if (error) { errorMsg.innerText = error.message; errorMsg.style.display = 'block'; }
+        else { authOverlay.style.display = 'none'; loadData(); }
     }
 
     async function handleLogout() { await dbClient.auth.signOut(); location.reload(); }
@@ -155,14 +132,14 @@
     }
 
     function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.map(item => `
+        tableBody.innerHTML = data.map(item => `
             <tr>
-                <td>${item.entity || ""}</td>
+                <td>${item.clientName || ""}</td>
                 <td>${item.customerName || ""}</td>
                 <td>${item.speed || ""}</td>
                 <td>${item.location || ""}</td>
                 <td>${item.connectivity || ""}</td>
-                <td><span class="badge ${item.deliveryStatus === 'Active' ? 'bg-green' : 'bg-yellow'}">${item.deliveryStatus || ""}</span></td>
+                <td><span class="badge ${item.deliveryStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.deliveryStatus || ""}</span></td>
                 <td>${item.months || ""}</td>
                 <td>${item.devices || ""}</td>
                 <td>${item.price || ""}</td>
@@ -173,53 +150,59 @@
                 <td>${item.startDate || ""}</td>
                 <td>${item.endDate || ""}</td>
                 <td>${item.poExpiryDate || ""}</td>
+                <td><span class="badge ${item.serviceStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.serviceStatus || ""}</span></td>
                 <td>${item.serviceStopDate || ""}</td>
                 <td>${item.poRenewed || ""}</td>
                 <td>${item.poRenewalDate || ""}</td>
                 <td style="white-space:nowrap;">
-                    <button onclick="editEntry(${item.id})" style="border:none; background:none; cursor:pointer; font-size:16px;">✏️</button>
-                    <button onclick="deleteEntry(${item.id})" style="border:none; background:none; cursor:pointer; font-size:16px;">🗑️</button>
+                    <button onclick="editEntry(${item.id})">✏️</button>
+                    <button onclick="deleteEntry(${item.id})">🗑️</button>
                 </td>
             </tr>
         `).join('');
     }
 
+    function exportToCSV() {
+        if(salesData.length === 0) return;
+        const headers = ["Client Name,Customer Name,Speed,Location,Connectivity,Status,Months,Devices,Price per Device,Excl GST,Incl GST,Payment,Payment Date,Start Date,End Date,PO Expiry,Service Status,Stop Date,PO Renewed,Renewal Date"];
+        const rows = salesData.map(i => [i.clientName, i.customerName, i.speed, i.location, i.connectivity, i.deliveryStatus, i.months, i.devices, i.price, i.exclGst, i.inclGst, i.paymentStatus, i.paymentDate, i.startDate, i.endDate, i.poExpiryDate, i.serviceStatus, i.serviceStopDate, i.poRenewed, i.poRenewalDate].join(","));
+        const blob = new Blob([[headers, ...rows].join("\n")], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'Transmedia_Report.csv'; a.click();
+    }
+
     function filterTable() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        renderTable(salesData.filter(i => (i.customerName || "").toLowerCase().includes(q)));
+        const q = searchInput.value.toLowerCase();
+        renderTable(salesData.filter(i => (i.customerName || "").toLowerCase().includes(q) || (i.clientName || "").toLowerCase().includes(q)));
     }
 
     window.deleteEntry = async (id) => {
-        if (!confirm("Delete this entry?")) return;
-        const { error } = await dbClient.from("sales_entries").delete().eq("id", id);
-        if (error) alert("Error deleting: " + error.message);
-        else loadData();
+        if (!confirm("Delete entry?")) return;
+        await dbClient.from("sales_entries").delete().eq("id", id);
+        loadData();
     };
 
-    document.getElementById('salesForm').onsubmit = async (e) => {
+    salesForm.onsubmit = async (e) => {
         e.preventDefault();
         const entry = Object.fromEntries(new FormData(e.target).entries());
-        // Clean empty values to null
         Object.keys(entry).forEach(k => { if(entry[k] === "") entry[k] = null; });
-        
         const { error } = editingId ? await dbClient.from("sales_entries").update(entry).eq("id", editingId) : await dbClient.from("sales_entries").insert([entry]);
         if (error) alert(error.message); else { closeModal(); loadData(); }
     };
 
-    function openModal() { editingId = null; document.getElementById('salesForm').reset(); document.getElementById('modalOverlay').classList.add('open'); }
-    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    function openModal() { editingId = null; salesForm.reset(); modalOverlay.classList.add('open'); }
+    function closeModal() { modalOverlay.classList.remove('open'); }
     
     window.editEntry = (id) => {
         editingId = id;
         const item = salesData.find(x => x.id === id);
-        const form = document.getElementById('salesForm');
-        Object.keys(item).forEach(k => { if(form.elements[k]) form.elements[k].value = item[k] || ""; });
-        document.getElementById('modalOverlay').classList.add('open');
+        Object.keys(item).forEach(k => { if(salesForm.elements[k]) salesForm.elements[k].value = item[k] || ""; });
+        modalOverlay.classList.add('open');
     };
 
     (async () => {
         const { data: { user } } = await dbClient.auth.getUser();
-        if (user) { document.getElementById('authOverlay').style.display = 'none'; loadData(); }
+        if (user) { authOverlay.style.display = 'none'; loadData(); }
     })();
 </script>
 </body>
