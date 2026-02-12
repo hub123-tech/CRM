@@ -21,6 +21,8 @@
         .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 11px; display: inline-block; }
         .bg-green { background: #dcfce7; color: #166534; }
         .bg-red { background: #fee2e2; color: #991b1b; }
+        /* 50-Day Warning Style */
+        .expiry-warning { background-color: #fff7ed !important; border-left: 5px solid #f97316; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.open { display: flex; }
         .modal { background: white; width: 95%; max-width: 1100px; border-radius: 16px; padding: 25px; max-height: 90vh; overflow-y: auto; }
@@ -56,8 +58,8 @@
         <thead>
             <tr>
                 <th>Client Name</th><th>Customer Name</th><th>Speed</th><th>Location</th><th>Connectivity</th>
-                <th>Status</th><th>Months</th><th>Devices</th><th>Price for 1 device</th><th>Total exclusive GST</th>
-                <th>Total inclusive GST</th><th>Payment Status</th><th>Payment Date</th><th>Start Date</th>
+                <th>Status</th><th>Months</th><th>Devices</th><th>Price for 1 device</th><th>Total exclusive gst</th>
+                <th>Total inclusive gst</th><th>Payment Status</th><th>Payment Date</th><th>Start Date</th>
                 <th>End Date</th><th>PO Expiry</th><th>Service Status</th><th>Service Stop Date</th><th>PO Renewed?</th><th>Renewal Date</th><th>Actions</th>
             </tr>
         </thead>
@@ -84,8 +86,8 @@
                 <div><label>Months</label><input name="months" type="number"></div>
                 <div><label>Devices</label><input name="devices" type="number"></div>
                 <div><label>Price for 1 device</label><input name="price" type="number"></div>
-                <div><label>Total exclusive GST</label><input name="exclGst" type="number"></div>
-                <div><label>Total inclusive GST</label><input name="inclGst" type="number"></div>
+                <div><label>Total exclusive gst</label><input name="exclGst" type="number"></div>
+                <div><label>Total inclusive gst</label><input name="inclGst" type="number"></div>
                 <div><label>Payment Status</label><select name="paymentStatus"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option></select></div>
                 <div><label>Payment Date</label><input type="date" name="paymentDate"></div>
                 <div><label>Start Date</label><input type="date" name="startDate"></div>
@@ -132,34 +134,42 @@
     }
 
     function renderTable(data) {
-        tableBody.innerHTML = data.map(item => `
-            <tr>
-                <td>${item.clientName || ""}</td>
-                <td>${item.customerName || ""}</td>
-                <td>${item.speed || ""}</td>
-                <td>${item.location || ""}</td>
-                <td>${item.connectivity || ""}</td>
-                <td><span class="badge ${item.deliveryStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.deliveryStatus || ""}</span></td>
-                <td>${item.months || ""}</td>
-                <td>${item.devices || ""}</td>
-                <td>${item.price || ""}</td>
-                <td>${item.exclGst || ""}</td>
-                <td>${item.inclGst || ""}</td>
-                <td><span class="badge ${item.paymentStatus === 'Paid' ? 'bg-green' : 'bg-red'}">${item.paymentStatus || ""}</span></td>
-                <td>${item.paymentDate || ""}</td>
-                <td>${item.startDate || ""}</td>
-                <td>${item.endDate || ""}</td>
-                <td>${item.poExpiryDate || ""}</td>
-                <td><span class="badge ${item.serviceStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.serviceStatus || ""}</span></td>
-                <td>${item.serviceStopDate || ""}</td>
-                <td>${item.poRenewed || ""}</td>
-                <td>${item.poRenewalDate || ""}</td>
-                <td style="white-space:nowrap;">
-                    <button onclick="editEntry(${item.id})">✏️</button>
-                    <button onclick="deleteEntry(${item.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
+        tableBody.innerHTML = data.map(item => {
+            // Calculate 50-day warning
+            const expiry = new Date(item.poExpiryDate);
+            const today = new Date();
+            const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+            const rowClass = (diffDays <= 50 && diffDays > 0) ? 'class="expiry-warning"' : '';
+
+            return `
+                <tr ${rowClass}>
+                    <td>${item.clientName || ""}</td>
+                    <td>${item.customerName || ""}</td>
+                    <td>${item.speed || ""}</td>
+                    <td>${item.location || ""}</td>
+                    <td>${item.connectivity || ""}</td>
+                    <td><span class="badge ${item.deliveryStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.deliveryStatus || ""}</span></td>
+                    <td>${item.months || ""}</td>
+                    <td>${item.devices || ""}</td>
+                    <td>${item.price || ""}</td>
+                    <td>${item.exclGst || ""}</td>
+                    <td>${item.inclGst || ""}</td>
+                    <td><span class="badge ${item.paymentStatus === 'Paid' ? 'bg-green' : 'bg-red'}">${item.paymentStatus || ""}</span></td>
+                    <td>${item.paymentDate || ""}</td>
+                    <td>${item.startDate || ""}</td>
+                    <td>${item.endDate || ""}</td>
+                    <td><strong>${item.poExpiryDate || ""}</strong></td>
+                    <td><span class="badge ${item.serviceStatus === 'Active' ? 'bg-green' : 'bg-red'}">${item.serviceStatus || ""}</span></td>
+                    <td>${item.serviceStopDate || ""}</td>
+                    <td>${item.poRenewed || ""}</td>
+                    <td>${item.poRenewalDate || ""}</td>
+                    <td style="white-space:nowrap;">
+                        <button onclick="editEntry(${item.id})">✏️</button>
+                        <button onclick="deleteEntry(${item.id})">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function exportToCSV() {
